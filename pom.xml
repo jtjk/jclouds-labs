@@ -65,7 +65,6 @@
   </repositories>
 
   <modules>
-    <module>azurecompute-arm-dev</module>
     <module>azurecompute-arm</module>
     <module>azurecompute</module>
     <module>etcd</module>
