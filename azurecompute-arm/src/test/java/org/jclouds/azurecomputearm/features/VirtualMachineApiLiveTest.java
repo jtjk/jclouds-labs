@@ -157,7 +157,9 @@ public class VirtualMachineApiLiveTest extends BaseAzureComputeApiLiveTest {
 
    @Test(dependsOnMethods = "testList")
    public void testDelete() {
-      api().delete(getName());
+      String statusCode = api().delete(getName());
+      assertTrue(statusCode.equals("202"));
+
       //StorageAccountApi storageApi = api.getStorageAccountApi(getSubscriptionId(), getResourceGroup());
       //TODO: delete storage and other resources after VM is destroyed. storageApi.delete(getName() + "storage");
 

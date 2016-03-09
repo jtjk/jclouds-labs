@@ -29,6 +29,7 @@ import org.jclouds.azurecomputearm.domain.CaptureVMImageParams;
 import org.jclouds.azurecomputearm.domain.Role;
 import org.jclouds.azurecomputearm.domain.VirtualMachineProperties;
 import org.jclouds.azurecomputearm.functions.ParseRequestIdHeader;
+import org.jclouds.azurecomputearm.functions.StatusCodeParser;
 import org.jclouds.azurecomputearm.oauth.v2.filters.OAuthFilter;
 import org.jclouds.azurecomputearm.xml.RoleHandler;
 import org.jclouds.rest.annotations.*;
@@ -90,8 +91,9 @@ public interface VirtualMachineApi {
    @Named("DeleteVirtualMachine")
    @DELETE
    @Path("/virtualMachines/{name}")
+   @ResponseParser(StatusCodeParser.class)
    @Fallback(Fallbacks.EmptyListOnNotFoundOr404.class)
-   void delete(@PathParam("name") String name);
+   String delete(@PathParam("name") String name);
 
    /**
     * The Restart Virtual Machine operation

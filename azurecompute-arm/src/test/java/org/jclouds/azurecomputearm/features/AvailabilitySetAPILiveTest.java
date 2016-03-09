@@ -91,7 +91,8 @@ public class AvailabilitySetAPILiveTest extends AbstractAzureComputeApiLiveTest 
 
    @Test(dependsOnMethods = "testGet")
    public void testDelete() {
-      api().delete(getName());
+      String statusCode = api().delete(getName());
+      assertTrue(statusCode.equals("200"));
    }
 
    private AvailabilitySetApi api() {

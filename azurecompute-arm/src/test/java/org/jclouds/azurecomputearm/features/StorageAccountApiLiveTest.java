@@ -107,7 +107,8 @@ public class StorageAccountApiLiveTest extends BaseAzureComputeApiLiveTest {
 
    @AfterClass(alwaysRun = true)
    public void testDelete() {
-      api().delete(NAME);
+      String statusCode = api().delete(NAME);
+      assertTrue(statusCode.equals("200"));
       assertFalse(api().isAvailable(NAME).nameAvailable().equals("false"));
    }
 

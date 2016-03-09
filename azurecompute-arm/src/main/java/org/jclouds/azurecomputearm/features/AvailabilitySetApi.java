@@ -18,6 +18,7 @@ package org.jclouds.azurecomputearm.features;
 
 import org.jclouds.Fallbacks.EmptyListOnNotFoundOr404;
 import org.jclouds.azurecomputearm.domain.AvailabilitySet;
+import org.jclouds.azurecomputearm.functions.StatusCodeParser;
 import org.jclouds.azurecomputearm.oauth.v2.filters.OAuthFilter;
 import org.jclouds.rest.annotations.*;
 import org.jclouds.rest.binders.BindToJsonPayload;
@@ -72,8 +73,9 @@ public interface AvailabilitySetApi {
    @Named("DeleteAvailabilitySet")
    @DELETE
    @Path("/availabilitySets/{name}")
+   @ResponseParser(StatusCodeParser.class)
    @Fallback(EmptyListOnNotFoundOr404.class)
-   void delete(@PathParam("name") String name);
+   String delete(@PathParam("name") String name);
 
    /**
     * The Get Availability set operation get one of the availability sets by name

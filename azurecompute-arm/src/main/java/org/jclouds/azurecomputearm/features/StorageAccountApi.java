@@ -23,6 +23,7 @@ import javax.ws.rs.core.MediaType;
 import org.jclouds.Fallbacks;
 import org.jclouds.Fallbacks.NullOnNotFoundOr404;
 import org.jclouds.azurecomputearm.domain.*;
+import org.jclouds.azurecomputearm.functions.StatusCodeParser;
 import org.jclouds.azurecomputearm.oauth.v2.filters.OAuthFilter;
 import org.jclouds.rest.annotations.*;
 import org.jclouds.rest.binders.BindToJsonPayload;
@@ -133,7 +134,8 @@ public interface StorageAccountApi {
     */
    @Named("DeleteStorageAccount")
    @DELETE
+   @ResponseParser(StatusCodeParser.class)
    @Path("/resourcegroups/{resourceGroup}/providers/Microsoft.Storage/storageAccounts/{storageAccountName}")
-   void delete(@PathParam("storageAccountName") String storageAccountName);
+   String delete(@PathParam("storageAccountName") String storageAccountName);
 
 }

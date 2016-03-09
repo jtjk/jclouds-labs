@@ -95,8 +95,8 @@ public class AvailabilitySetAPIMockTest extends BaseAzureComputeApiMockTest {
 
       final AvailabilitySetApi availabilitySetApi = api.getAvailabilitySetApi("subscriptionid", "resourcegroup");
 
-      availabilitySetApi.delete("name");
-
+      String response = availabilitySetApi.delete("name");
+      assertEquals(response,"200");
       assertSent(server, "DELETE",
               "/subscriptions/subscriptionid/resourceGroups/resourcegroup/" + "" +
                       "providers/Microsoft.Compute/availabilitySets/name?api-version=2015-06-15");
