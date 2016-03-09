@@ -1,10 +1,9 @@
 {"value": [
   {
-    "id":"/subscriptions/SUBSCRIPTIONID/locations/eastasia",
+    "id":"/subscriptions/subscriptionid/locations/eastasia",
     "name":"eastasia",
     "displayName":"East Asia",
     "longitude":"114.188",
     "latitude":"22.267"
   }
-  ]
-}
+] }
