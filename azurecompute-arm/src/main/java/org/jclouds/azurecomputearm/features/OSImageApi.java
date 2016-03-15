@@ -16,7 +16,7 @@
  */
 package org.jclouds.azurecomputearm.features;
 
-import static javax.ws.rs.core.MediaType.APPLICATION_XML;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 import java.util.List;
 
@@ -33,37 +33,73 @@ import javax.ws.rs.Produces;
 import org.jclouds.Fallbacks.EmptyListOnNotFoundOr404;
 import org.jclouds.Fallbacks.NullOnNotFoundOr404;
 import org.jclouds.azurecomputearm.binders.OSImageParamsToXML;
-import org.jclouds.azurecomputearm.domain.OSImage;
 import org.jclouds.azurecomputearm.domain.OSImageParams;
+import org.jclouds.azurecomputearm.domain.Offer;
+import org.jclouds.azurecomputearm.domain.Publisher;
+import org.jclouds.azurecomputearm.domain.SKU;
 import org.jclouds.azurecomputearm.functions.OSImageParamsName;
 import org.jclouds.azurecomputearm.functions.ParseRequestIdHeader;
-import org.jclouds.azurecomputearm.xml.ListOSImagesHandler;
+import org.jclouds.azurecomputearm.oauth.v2.filters.OAuthFilter;
 import org.jclouds.rest.annotations.BinderParam;
 import org.jclouds.rest.annotations.Fallback;
-import org.jclouds.rest.annotations.Headers;
 import org.jclouds.rest.annotations.ParamParser;
+import org.jclouds.rest.annotations.QueryParams;
+import org.jclouds.rest.annotations.RequestFilters;
 import org.jclouds.rest.annotations.ResponseParser;
-import org.jclouds.rest.annotations.XMLResponseParser;
+import org.jclouds.rest.annotations.SelectJson;
 
 /**
- * The Service Management API includes operations for managing the OS images in your subscription.
- *
- * @see <a href="http://msdn.microsoft.com/en-us/library/jj157175">docs</a>
+ * The Azure Resource Management API includes operations for managing the OS images in your subscription.
  */
-@Path("/services/images")
-@Headers(keys = "x-ms-version", values = "{jclouds.api-version}")
-@Consumes(APPLICATION_XML)
+@Path("/subscriptions/{subscriptionId}/providers/Microsoft.Compute/locations/{location}")
+@RequestFilters(OAuthFilter.class)
+@QueryParams(keys = "api-version", values = "2015-06-15")
+@Consumes(APPLICATION_JSON)
 public interface OSImageApi {
 
    /**
-    * The List Cloud Services operation lists the cloud services available under the current subscription.
+    * List Publishers in location
     */
-   @Named("ListImages")
+   @Named("ListPublishers")
    @GET
-   @Produces(APPLICATION_XML)
-   @XMLResponseParser(ListOSImagesHandler.class)
+   @Produces(APPLICATION_JSON)
+   @Path("/publishers")
    @Fallback(EmptyListOnNotFoundOr404.class)
-   List<OSImage> list();
+   List<Publisher> listPublishers();
+
+   /*
+Version- https://management.azure.com/subscriptions/<sub-id>/providers/Microsoft.Compute/locations/eastus/publishers/<publisher>/artifacttypes/vmimage/offers/<offer>/skus/<sku>/versions?api-version=2015-06-15
+    */
+   /**
+    * List Offers in publisher
+    */
+   @Named("ListOffers")
+   @GET
+   @Produces(APPLICATION_JSON)
+   @Path("/publishers/{publisher}/artifacttypes/vmimage/offers")
+   @Fallback(EmptyListOnNotFoundOr404.class)
+   List<Offer> listOffers(@PathParam("publisher") String publisher);
+
+   /**
+    * List SKUs in offer
+    */
+   @Named("ListSKUs")
+   @GET
+   @Produces(APPLICATION_JSON)
+   @Path("/publishers/{publisher}/artifacttypes/vmimage/offers/{offer}/skus")
+   @Fallback(EmptyListOnNotFoundOr404.class)
+   List<SKU> listSKUs(@PathParam("publisher") String publisher, @PathParam("offer") String offer);
+
+   /**
+    * List SKUs in offer
+    */
+   @Named("ListVersions")
+   @GET
+   @Produces(APPLICATION_JSON)
+   @Path("/publishers/{publisher}/artifacttypes/vmimage/offers/{offer}/skus/{sku}/versions")
+   @Fallback(EmptyListOnNotFoundOr404.class)
+   List<SKU> listVersions(@PathParam("publisher") String publisher, @PathParam("offer") String offer,
+                          @PathParam("sku") String sku);
 
    /**
     * The Add OS Image operation adds an OS image that is currently stored in a storage account in your subscription to

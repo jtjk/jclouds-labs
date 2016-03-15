@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
+import org.jclouds.azurecomputearm.AzureComputeProviderMetadata;
 import org.jclouds.azurecomputearm.compute.options.AzureComputeTemplateOptions;
 import org.jclouds.azurecomputearm.internal.BaseAzureComputeApiLiveTest;
 import org.jclouds.compute.RunNodesException;
@@ -32,6 +33,7 @@ import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.Template;
 import org.jclouds.compute.domain.TemplateBuilder;
 import org.jclouds.compute.internal.BaseComputeServiceContextLiveTest;
+import org.jclouds.providers.ProviderMetadata;
 import org.jclouds.sshj.config.SshjSshClientModule;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -42,6 +44,12 @@ import com.google.inject.Module;
 public class AzureComputeServiceContextLiveTest extends BaseComputeServiceContextLiveTest {
 
    private static final int COUNT = 2;
+
+   @Override
+   protected ProviderMetadata createProviderMetadata() {
+      AzureComputeProviderMetadata pm = AzureComputeProviderMetadata.builder().build();
+      return pm;
+   }
 
    @Override
    protected Module getSshModule() {

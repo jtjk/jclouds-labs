@@ -59,10 +59,10 @@ public class AzureComputeProviderMetadata extends BaseProviderMetadata {
       properties.setProperty(OPERATION_POLL_MAX_PERIOD, "15");
       properties.setProperty(TCP_RULE_FORMAT, "tcp_%s-%s");
       properties.setProperty(TCP_RULE_REGEXP, "tcp_\\d{1,5}-\\d{1,5}");
-      properties.put("oauth.endpoint", "https://login.microsoftonline.com/oauth2/token");
+      properties.put("oauth.endpoint", "https://login.microsoftonline.com/koskineniki.onmicrosoft.com/oauth2/token");
       properties.put(JWS_ALG, "RS256");
       properties.put(AUDIENCE, "https://login.microsoftonline.com/oauth2/token");
-      properties.put(RESOURCE, "https://management.azure.com");
+      properties.put(RESOURCE, "https://management.azure.com/");
       properties.put(CREDENTIAL_TYPE, CLIENT_CREDENTIALS_SECRET.toString());
       return properties;
    }

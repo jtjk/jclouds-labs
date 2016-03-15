@@ -14,27 +14,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jclouds.azurecomputearm.features;
+package org.jclouds.azurecomputearm.domain;
 
-import org.jclouds.azurecomputearm.domain.Location;
-import org.jclouds.azurecomputearm.internal.BaseAzureComputeApiLiveTest;
-import org.testng.annotations.Test;
+import com.google.auto.value.AutoValue;
+import org.jclouds.javax.annotation.Nullable;
+import org.jclouds.json.SerializedNames;
 
-import static org.testng.Assert.assertTrue;
+/**
+ * Publisher
+ */
+@AutoValue
+public abstract class Publisher {
 
-@Test(groups = "live", testName = "LocationApiLiveTest")
-public class LocationApiLiveTest extends BaseAzureComputeApiLiveTest {
+   Publisher() {
+   } // For AutoValue only!
 
-   @Test
-   public void testList() {
-      Iterable<Location> list = api.getLocationApi(getSubscriptionId()).list();
-      for (Location location : api().list()) {
-          assertTrue(!location.id().isEmpty());
-      }
-      assertTrue(!api().list().isEmpty());
-   }
+   /**
+    * The location of the publisher
+    */
+   @Nullable
+   public abstract String location();
 
-   private LocationApi api() {
-      return api.getLocationApi(getSubscriptionId());
+   /**
+    * The name of the publisher
+    */
+   @Nullable
+   public abstract String name();
+
+   /**
+    * The id of the publisher
+    */
+   @Nullable
+   public abstract String id();
+
+   @SerializedNames({"location", "name", "id"})
+   public static Publisher create(final String location, final String name, final String id) {
+
+      return new AutoValue_Publisher(location, name, id);
    }
 }

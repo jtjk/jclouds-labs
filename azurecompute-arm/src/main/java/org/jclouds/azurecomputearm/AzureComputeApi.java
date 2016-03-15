@@ -97,11 +97,10 @@ public interface AzureComputeApi extends Closeable {
 
    /**
     * The Service Management API includes operations for managing the OS images in your subscription.
-    *
-    * @see <a href="http://msdn.microsoft.com/en-us/library/jj157175">docs</a>
     */
    @Delegate
-   OSImageApi getOSImageApi();
+   OSImageApi getOSImageApi(@PathParam("subscriptionId") String subscriptionId,
+                            @PathParam("location") String location);
 
    /**
     * The Service Management API includes operations for Tracking Asynchronous Service Management Requests.

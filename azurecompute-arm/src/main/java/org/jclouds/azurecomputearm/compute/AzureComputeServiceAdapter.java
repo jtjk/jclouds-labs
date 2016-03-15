@@ -191,6 +191,8 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<Deploym
 
    @Override
    public Iterable<OSImage> listImages() {
+
+      /*
       final List<OSImage> osImages = Lists.newArrayList();
       for (OSImage osImage : api.getOSImageApi().list()) {
          if (osImage.location() == null) {
@@ -227,17 +229,20 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<Deploym
             }
          }
       }
-      return osImages;
+      return osImages;*/
+      return null;
    }
 
    @Override
    public OSImage getImage(final String id) {
+      /*
       final String[] idParts = OSImageToImage.fromGeoName(id);
       final OSImage image = Iterables.find(api.getOSImageApi().list(), new Predicate<OSImage>() {
          @Override
          public boolean apply(final OSImage input) {
             return idParts[0].equals(input.name());
          }
+
       });
 
       return image == null
@@ -257,14 +262,17 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<Deploym
                               image.mediaLink(),
                               image.logicalSizeInGB(),
                               image.eula());
+                              */
+      return null;
    }
 
    private String getSubscriptionId() {
-      return null; // TODO: get subscription id
+      return "626f67f6-8fd0-4cc3-bc02-e3ce95f7dfec"; // TODO: get subscription id
    }
    @Override
    public Iterable<Location> listLocations() {
-      return api.getLocationApi(getSubscriptionId()).list();
+      Iterable<Location> list = api.getLocationApi(getSubscriptionId()).list();
+      return list;
    }
 
    @Override
