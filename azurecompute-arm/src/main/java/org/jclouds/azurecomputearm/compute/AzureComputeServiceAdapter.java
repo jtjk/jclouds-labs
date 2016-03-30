@@ -125,10 +125,12 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<Deploym
    @Override
    public Iterable<ImageReference> listImages() {
       final List<ImageReference> osImages = Lists.newArrayList();
+
       OSImageApi osImageApi = api.getOSImageApi(getSubscriptionId(), getLocation());
 
       Iterable<Publisher> list = osImageApi.listPublishers();
       for (Publisher publisher : list) {
+         System.out.println("pub" + publisher.name());
          Iterable<Offer> offerList = osImageApi.listOffers(publisher.name());
          for (Offer offer : offerList) {
             Iterable<SKU> skuList = osImageApi.listSKUs(publisher.name(), offer.name());
@@ -140,6 +142,7 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<Deploym
             }
          }
       }
+      System.out.println("ready");
       return osImages;
    }
 
@@ -174,11 +177,13 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<Deploym
    }
 
    private String getSubscriptionId() {
-      return null; // TODO: get subscription id
+      return System.getProperty("azurecompute-arm.subscriptionid");
    }
+
    private String getLocation() {
-      return null; // TODO: get location
+      return "westus"; // TODO: get location
    }
+
    @Override
    public Iterable<Location> listLocations() {
       return api.getLocationApi(getSubscriptionId()).list();
