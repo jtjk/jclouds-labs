@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 package org.jclouds.azurecomputearm.compute;
-import static com.google.common.base.Predicates.notNull;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.jclouds.util.Predicates2.retry;
@@ -29,7 +28,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import com.google.common.collect.FluentIterable;
 import org.jclouds.azurecomputearm.AzureComputeApi;
 import org.jclouds.azurecomputearm.compute.config.AzureComputeServiceContextModule.AzureComputeConstants;
 import org.jclouds.azurecomputearm.domain.Deployment;
