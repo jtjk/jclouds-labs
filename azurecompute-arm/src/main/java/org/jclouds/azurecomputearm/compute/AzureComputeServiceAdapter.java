@@ -15,9 +15,12 @@
  * limitations under the License.
  */
 package org.jclouds.azurecomputearm.compute;
+import static com.google.common.base.Predicates.notNull;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.jclouds.util.Predicates2.retry;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -26,6 +29,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import com.google.common.collect.FluentIterable;
 import org.jclouds.azurecomputearm.AzureComputeApi;
 import org.jclouds.azurecomputearm.compute.config.AzureComputeServiceContextModule.AzureComputeConstants;
 import org.jclouds.azurecomputearm.domain.Deployment;
@@ -128,20 +132,33 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<Deploym
 
       OSImageApi osImageApi = api.getOSImageApi(getSubscriptionId(), getLocation());
 
-      Iterable<Publisher> list = osImageApi.listPublishers();
-      for (Publisher publisher : list) {
-         System.out.println("pub" + publisher.name());
-         Iterable<Offer> offerList = osImageApi.listOffers(publisher.name());
+//      Iterable<Publisher> list = osImageApi.listPublishers();
+//      for (Publisher publisher : list) {
+//         System.out.println("pub" + publisher.name());
+//      Iterable<Offer> offerList = osImageApi.listOffers(publisher.name());
+         Iterable<Offer> offerList = osImageApi.listOffers("canonical");
          for (Offer offer : offerList) {
-            Iterable<SKU> skuList = osImageApi.listSKUs(publisher.name(), offer.name());
+            Iterable<SKU> skuList = osImageApi.listSKUs("canonical", offer.name());
             for (SKU sku : skuList) {
-               Iterable<Version> versions = osImageApi.listVersions(publisher.name(), offer.name(), sku.name());
+               Iterable<Version> versions = osImageApi.listVersions("canonical", offer.name(), sku.name());
                for (Version version : versions) {
-                  osImages.add(ImageReference.create(publisher.name(), offer.name(), sku.name(), version.name()));
+                  System.out.println(offer.name() + sku.name() + version.name());
+                  osImages.add(ImageReference.create("canonical", offer.name(), sku.name(), version.name()));
                }
             }
          }
+      Iterable<Offer> offerList2 = osImageApi.listOffers("MicrosoftWindowsServer");
+      for (Offer offer : offerList2) {
+         Iterable<SKU> skuList = osImageApi.listSKUs("MicrosoftWindowsServer", offer.name());
+         for (SKU sku : skuList) {
+            Iterable<Version> versions = osImageApi.listVersions("MicrosoftWindowsServer", offer.name(), sku.name());
+            for (Version version : versions) {
+               System.out.println(offer.name() + sku.name() + version.name());
+               osImages.add(ImageReference.create("MicrosoftWindowsServer", offer.name(), sku.name(), version.name()));
+            }
+         }
       }
+//      }
       System.out.println("ready");
       return osImages;
    }
@@ -223,7 +240,9 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<Deploym
 
    @Override
    public Iterable<Deployment> listNodes() {
-      return null;
+//      return FluentIterable.from(api.getVirtualMachineApi(getSubscriptionId(),"group").list());
+      List<Deployment> list = new ArrayList<Deployment>(1);
+      return list;
    }
 
    @Override
