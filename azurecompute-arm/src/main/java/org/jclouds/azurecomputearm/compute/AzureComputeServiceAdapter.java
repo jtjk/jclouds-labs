@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 package org.jclouds.azurecomputearm.compute;
+import static com.google.common.base.Predicates.notNull;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.jclouds.util.Predicates2.retry;
@@ -28,17 +29,11 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import com.google.common.base.Function;
+import com.google.common.collect.FluentIterable;
 import org.jclouds.azurecomputearm.AzureComputeApi;
 import org.jclouds.azurecomputearm.compute.config.AzureComputeServiceContextModule.AzureComputeConstants;
-import org.jclouds.azurecomputearm.domain.Deployment;
-import org.jclouds.azurecomputearm.domain.VMSize;
-import org.jclouds.azurecomputearm.domain.ImageReference;
-import org.jclouds.azurecomputearm.domain.Location;
-
-import org.jclouds.azurecomputearm.domain.Publisher;
-import org.jclouds.azurecomputearm.domain.Offer;
-import org.jclouds.azurecomputearm.domain.SKU;
-import org.jclouds.azurecomputearm.domain.Version;
+import org.jclouds.azurecomputearm.domain.*;
 
 import org.jclouds.azurecomputearm.features.OSImageApi;
 import org.jclouds.compute.ComputeServiceAdapter;
@@ -127,7 +122,7 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<Deploym
    @Override
    public Iterable<ImageReference> listImages() {
       final List<ImageReference> osImages = Lists.newArrayList();
-
+/*
       OSImageApi osImageApi = api.getOSImageApi(getSubscriptionId(), getLocation());
 
       Iterable<Publisher> list = osImageApi.listPublishers();
@@ -143,6 +138,10 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<Deploym
             }
          }
       }
+      */
+      //UbuntuServer12.04.5-LTS12.04.201508190
+      osImages.add(ImageReference.create("Canonical", "Ubuntu", "Server", "12.04.5-LTS12.04.201508190"));
+
       return osImages;
    }
 
@@ -223,9 +222,19 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<Deploym
 
    @Override
    public Iterable<Deployment> listNodes() {
-//      return FluentIterable.from(api.getVirtualMachineApi(getSubscriptionId(),"group").list());
-      List<Deployment> list = new ArrayList<Deployment>(1);
-      return list;
+
+      return FluentIterable.from(api.getVirtualMachineApi(getSubscriptionId(),"group").list()).
+              transform(new Function<VirtualMachine, Deployment>() {
+                 @Override
+                 public Deployment apply(final VirtualMachine vm) {
+                    return api.getDeploymentApi(getSubscriptionId(),"group").getDeployment(vm.name());
+                 }
+              }).
+              filter(notNull()).
+              toSet();
+
+//   List<Deployment> list = new ArrayList<Deployment>(1);
+//      return list;
    }
 
    @Override
