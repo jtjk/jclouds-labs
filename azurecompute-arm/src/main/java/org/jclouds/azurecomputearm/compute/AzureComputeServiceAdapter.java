@@ -20,9 +20,7 @@ import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.jclouds.util.Predicates2.retry;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import javax.annotation.Resource;
 import javax.inject.Inject;
@@ -53,6 +51,8 @@ import com.google.common.collect.Sets;
  */
 @Singleton
 public class AzureComputeServiceAdapter implements ComputeServiceAdapter<Deployment, VMSize, ImageReference, Location> {
+
+   private static int runningNumber = 1;
 
    private static final String DEFAULT_LOGIN_USER = "jclouds";
 
@@ -104,8 +104,20 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<Deploym
       if (!retry(new Predicate<String>() {
          @Override
          public boolean apply(final String name) {
-            Deployment.DeploymentProperties properties = Deployment.DeploymentProperties.create("Accepted",null,null,null,null,null,null,null,null,null,"mode",null,null);
-            Deployment deployment = Deployment.create("asdf",name,properties);
+            Long now = System.currentTimeMillis() + runningNumber;
+            runningNumber++;
+
+            String template = "{\"$schema\":\"https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#\",\"contentVersion\":\"1.0.0.0\",\"parameters\":{\"newStorageAccountName\":{\"type\":\"string\",\"metadata\":{\"description\":\"Name of the Storage Account\"}},\"storageAccountType\":{\"type\":\"string\",\"defaultValue\":\"Standard_LRS\",\"allowedValues\":[\"Standard_LRS\",\"Standard_GRS\",\"Standard_ZRS\"],\"metadata\":{\"description\":\"Storage Account type\"}},\"location\":{\"type\":\"string\",\"allowedValues\":[\"East US\",\"West US\",\"West Europe\",\"East Asia\",\"Southeast Asia\"],\"metadata\":{\"description\":\"Location of storage account\"}}},\"resources\":[{\"type\":\"Microsoft.Storage/storageAccounts\",\"name\":\"[parameters('newStorageAccountName')]\",\"apiVersion\":\"2015-05-01-preview\",\"location\":\"[parameters('location')]\",\"properties\":{\"accountType\":\"[parameters('storageAccountType')]\"}}]}";
+            String parameters = "{\"newStorageAccountName\":{\"value\":\"" + "nm" + now.toString() + "\"},\"storageAccountType\":{\"value\":\"Standard_LRS\"},\"location\":{\"value\":\"West US\"}}";
+            String properties = getPutBody(template, "Incremental", parameters);
+            HashMap<String, String> tags = new HashMap<String, String>();
+            tags.put("tagname1", "tagvalue1");
+
+            String resourceGroup = api.getResourceGroupApi(getSubscriptionId()).create(getGroupId(), "westus", tags).name();
+            Deployment deployment = api.getDeploymentApi(getSubscriptionId(),getGroupId()).createDeployment(name, properties);
+
+//            Deployment.DeploymentProperties properties = Deployment.DeploymentProperties.create("Accepted",null,null,null,null,null,null,null,null,null,"mode",null,null);
+  //          Deployment deployment = Deployment.create("asdf",name,properties);
             //api.getDeploymentApi(getSubscriptionId(),"group").createDeployment(name, properties);
             if (deployment != null) {
                deployments.add(deployment);
@@ -189,7 +201,14 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<Deploym
    }
 
    private String getSubscriptionId() {
-      return System.getProperty("azurecompute-arm.subscriptionid");
+      return System.getProperty("test.azurecompute-arm.subscriptionid");
+   }
+
+   private String getGroupId() {
+      String group =  System.getProperty("test.azurecompute-arm.groupname");
+      if (group == null)
+         group = "group1025";
+      return group;
    }
 
    private String getLocation() {
@@ -198,13 +217,15 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<Deploym
 
    @Override
    public Iterable<Location> listLocations() {
+      String loc = getSubscriptionId();
       return api.getLocationApi(getSubscriptionId()).list();
    }
 
    @Override
    public Deployment getNode(final String id) {
+      Deployment deployment = api.getDeploymentApi(getSubscriptionId(),getGroupId()).getDeployment(id);
 
-      return null;
+      return deployment;
    }
 
    public Deployment internalDestroyNode(final String nodeId) {
@@ -238,11 +259,11 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<Deploym
    @Override
    public Iterable<Deployment> listNodes() {
 
-      return FluentIterable.from(api.getVirtualMachineApi(getSubscriptionId(),"group").list()).
+      return FluentIterable.from(api.getVirtualMachineApi(getSubscriptionId(),getGroupId()).list()).
               transform(new Function<VirtualMachine, Deployment>() {
                  @Override
                  public Deployment apply(final VirtualMachine vm) {
-                    return api.getDeploymentApi(getSubscriptionId(),"group").getDeployment(vm.name());
+                    return api.getDeploymentApi(getSubscriptionId(),getGroupId()).getDeployment(vm.name());
                  }
               }).
               filter(notNull()).

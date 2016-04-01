@@ -51,7 +51,7 @@ public class DeploymentToNodeMetadata implements Function<Deployment, NodeMetada
    // To get details about the resource(s) deployed via template, one needs to query the
    // various resources after the deployment has "SUCCEEDED".
    private static final Map<Deployment.ProvisioningState, NodeMetadata.Status> STATUS_TO_NODESTATUS =
-           ImmutableMap.<Deployment.ProvisioningState, NodeMetadata.Status>builder().
+           ImmutableMap.<Deployment.ProvisioningState, NodeMetadata.Status> builder().
                    put(Deployment.ProvisioningState.ACCEPTED, NodeMetadata.Status.PENDING).
                    put(Deployment.ProvisioningState.READY, NodeMetadata.Status.PENDING).
                    put(Deployment.ProvisioningState.RUNNING, NodeMetadata.Status.PENDING).
@@ -61,6 +61,18 @@ public class DeploymentToNodeMetadata implements Function<Deployment, NodeMetada
                    put(Deployment.ProvisioningState.SUCCEEDED, NodeMetadata.Status.RUNNING).
                    put(Deployment.ProvisioningState.UNRECOGNIZED, NodeMetadata.Status.UNRECOGNIZED).
                    build();
+
+   public static Deployment.ProvisioningState provisioningStateFromString(final String text) {
+      if (text != null) {
+         for (Deployment.ProvisioningState status : Deployment.ProvisioningState.values()) {
+            if (text.equalsIgnoreCase(status.name())) {
+               return status;
+            }
+         }
+      }
+      return Deployment.ProvisioningState.UNRECOGNIZED;
+   }
+
 
    private final AzureComputeApi api;
 
@@ -95,7 +107,8 @@ public class DeploymentToNodeMetadata implements Function<Deployment, NodeMetada
       builder.id(from.name());
       builder.providerId(from.name());
       builder.name(from.name());
-      builder.status(NodeMetadata.Status.RUNNING);
+      NodeMetadata.Status status = STATUS_TO_NODESTATUS.get(provisioningStateFromString(from.properties().provisioningState()));
+      builder.status(status);
       //builder.hostname(getHostname(from));
       //builder.group(nodeNamingConvention.groupInUniqueNameOrNull(getHostname(from)));
 

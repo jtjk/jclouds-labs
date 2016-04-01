@@ -55,6 +55,10 @@ public class ResourceGroupApiLiveTest extends BaseAzureComputeApiLiveTest {
 
       assertTrue(resourceGroups.size() > 0);
 
+      for (ResourceGroup group : resourceGroups) {
+         //api().delete(group.name());
+
+      }
       final ResourceGroup matching = Iterables.find(resourceGroups, new Predicate<ResourceGroup>() {
 
          @Override
