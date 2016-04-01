@@ -73,10 +73,21 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<Deploym
       this.azureComputeConstants = azureComputeConstants;
    }
 
+   private String getPutBody(String template, String mode, String parameters) {
+      String body = "{ " +
+              "\"properties\" : " +
+              "  { " +
+              "    \"template\" : " + template + ", " +
+              "    \"mode\" : \"" + mode + "\", " +
+              "    \"parameters\" : " + parameters + " " +
+              "  } " +
+              "}";
+      return body;
+   }
+
    @Override
    public NodeAndInitialCredentials<Deployment> createNodeWithGroupEncodedIntoName(
            final String group, final String name, final Template template) {
-
       // azure-specific options
 //      final AzureComputeTemplateOptions templateOptions = template.getOptions().as(AzureComputeTemplateOptions.class);
 //
@@ -93,7 +104,9 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<Deploym
       if (!retry(new Predicate<String>() {
          @Override
          public boolean apply(final String name) {
-            final Deployment deployment = null;
+            Deployment.DeploymentProperties properties = Deployment.DeploymentProperties.create("Accepted",null,null,null,null,null,null,null,null,null,"mode",null,null);
+            Deployment deployment = Deployment.create("asdf",name,properties);
+            //api.getDeploymentApi(getSubscriptionId(),"group").createDeployment(name, properties);
             if (deployment != null) {
                deployments.add(deployment);
             }
@@ -190,6 +203,7 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<Deploym
 
    @Override
    public Deployment getNode(final String id) {
+
       return null;
    }
 
@@ -214,6 +228,7 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<Deploym
 
    @Override
    public void resumeNode(final String id) {
+      getNode(id);
    }
 
    @Override

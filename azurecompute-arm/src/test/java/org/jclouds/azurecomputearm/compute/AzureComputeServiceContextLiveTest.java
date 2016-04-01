@@ -83,12 +83,12 @@ public class AzureComputeServiceContextLiveTest extends BaseComputeServiceContex
    }
 
    public AzureComputeServiceContextLiveTest() {
-      provider = "azurecompute";
+      provider = "azurecompute-arm";
    }
 
 
    @Test
-   public void testWindowsNode() throws RunNodesException {
+   public void testLinuxNode() throws RunNodesException {
       final String groupName = String.format("win-%s", System.getProperty("user.name"));
 
       final TemplateBuilder templateBuilder = view.getComputeService().templateBuilder();

@@ -95,6 +95,7 @@ public class DeploymentToNodeMetadata implements Function<Deployment, NodeMetada
       builder.id(from.name());
       builder.providerId(from.name());
       builder.name(from.name());
+      builder.status(NodeMetadata.Status.RUNNING);
       //builder.hostname(getHostname(from));
       //builder.group(nodeNamingConvention.groupInUniqueNameOrNull(getHostname(from)));
 
