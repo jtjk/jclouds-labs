@@ -47,13 +47,20 @@ public abstract class ImageReference {
    @Nullable
    public abstract String version();
 
-   @SerializedNames({"publisher", "offer", "sku", "version"})
+   /**
+    * The location of the image reference.
+    */
+   @Nullable
+   public abstract String location();
+
+   @SerializedNames({"publisher", "offer", "sku", "version", "location"})
    public static ImageReference create(final String publisher,
                                        final String offer,
                                        final String sku,
-                                       final String version) {
+                                       final String version,
+                                       final String location) {
 
       return new AutoValue_ImageReference(publisher,
-              offer, sku, version);
+              offer, sku, version, location);
    }
 }

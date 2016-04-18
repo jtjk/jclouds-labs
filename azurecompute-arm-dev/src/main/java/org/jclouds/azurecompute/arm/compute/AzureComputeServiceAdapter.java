@@ -369,10 +369,32 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<Deploym
       return api.getVMSizeApi(getLocation()).list();
    }
 
+   private void getImagesFromPublisher(String publisherName, List<ImageReference> osImagesRef) {
+/*
+      OSImageApi osImageApi = api.getOSImageApi(getLocation());
+      Iterable<Offer> offerList = osImageApi.listOffers(publisherName);
+      for (Offer offer : offerList) {
+         Iterable<SKU> skuList = osImageApi.listSKUs(publisherName, offer.name());
+         for (SKU sku : skuList) {
+            osImagesRef.add(ImageReference.create(publisherName, offer.name(), sku.name(), null, getLocation()));
+         }
+      }
+      */
+      osImagesRef.add(ImageReference.create(publisherName, "Ubuntu", "10.04", null, "eastasia"));
+      osImagesRef.add(ImageReference.create(publisherName, "Ubuntu", "12.04", null, "eastasia"));
+      osImagesRef.add(ImageReference.create(publisherName, "Ubuntu", "12.10", null, "eastasia"));
+      osImagesRef.add(ImageReference.create(publisherName, "Ubuntu", "10.04", "", "eastasia"));
+      osImagesRef.add(ImageReference.create(publisherName, "Ubuntu", "12.04", "", "eastasia"));
+      osImagesRef.add(ImageReference.create(publisherName, "Ubuntu", "12.10", "", "eastasia"));
+   }
+
    @Override
    public Iterable<ImageReference> listImages() {
       final List<ImageReference> osImages = Lists.newArrayList();
-
+//      getImagesFromPublisher("Microsoft.WindowsAzure.Compute", osImages);
+//      getImagesFromPublisher("MicrosoftWindowsServer", osImages);
+      getImagesFromPublisher("Canonical", osImages);
+/*
       OSImageApi osImageApi = api.getOSImageApi(getLocation());
 
       Iterable<Publisher> list = osImageApi.listPublishers();
@@ -393,7 +415,7 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<Deploym
             }
          }
       }
-
+*/
       return osImages;
    }
 
@@ -409,7 +431,7 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<Deploym
    }
 
    private String getLocation() {
-      return "westus"; // TODO: get location
+      return "eastasia"; // TODO: get location
    }
 
    @Override

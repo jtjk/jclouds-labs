@@ -237,7 +237,7 @@ public class VirtualMachineApiLiveTest extends BaseAzureComputeApiLiveTest {
    private VirtualMachineProperties getProperties(String blob, String nic) {
       HardwareProfile hwProf = HardwareProfile.create("Standard_D1");
       ImageReference imgRef = ImageReference.create("MicrosoftWindowsServerEssentials",
-              "WindowsServerEssentials", "WindowsServerEssentials", "latest");
+              "WindowsServerEssentials", "WindowsServerEssentials", "latest", "eastasia");
       VHD vhd = VHD.create(blob + "vhds/" + getName() + ".vhd");
       VHD vhd2 = VHD.create(blob + "vhds/" + getName() + "data.vhd");
       DataDisk dataDisk = DataDisk.create(getName() + "data", "100", 0, vhd2, "Empty");

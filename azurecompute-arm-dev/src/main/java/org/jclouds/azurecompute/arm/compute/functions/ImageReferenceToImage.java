@@ -18,7 +18,10 @@ package org.jclouds.azurecompute.arm.compute.functions;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.common.base.Supplier;
+import com.google.common.collect.FluentIterable;
 import org.jclouds.azurecompute.arm.domain.ImageReference;
+import org.jclouds.collect.Memoized;
 import org.jclouds.compute.domain.Image;
 import org.jclouds.compute.domain.ImageBuilder;
 import org.jclouds.compute.domain.OperatingSystem;
@@ -26,6 +29,10 @@ import org.jclouds.compute.domain.OsFamily;
 
 import com.google.common.base.Function;
 import com.google.inject.Inject;
+import org.jclouds.domain.Location;
+import org.jclouds.location.predicates.LocationPredicates;
+
+import java.util.Set;
 
 public class ImageReferenceToImage implements Function<ImageReference, Image> {
 
@@ -49,8 +56,11 @@ public class ImageReferenceToImage implements Function<ImageReference, Image> {
 
    private static final String ORACLE_lINUX = "Oracle Linux";
 
+   private final Supplier<Set<? extends org.jclouds.domain.Location>> locations;
+
    @Inject
-   ImageReferenceToImage() {
+   ImageReferenceToImage(@Memoized final Supplier<Set<? extends Location>> locations) {
+      this.locations = locations;
    }
 
    @Override
@@ -61,7 +71,9 @@ public class ImageReferenceToImage implements Function<ImageReference, Image> {
               .status(Image.Status.AVAILABLE)
               .version(image.version())
               .id(image.offer() + image.sku() + image.version())
-              .providerId(image.publisher());
+              .providerId(image.publisher())
+               .location(FluentIterable.from(locations.get())
+              .firstMatch(LocationPredicates.idEquals(image.location())).orNull());
 
       final OperatingSystem.Builder osBuilder = osFamily().apply(image);
       return builder.operatingSystem(osBuilder.build()).build();

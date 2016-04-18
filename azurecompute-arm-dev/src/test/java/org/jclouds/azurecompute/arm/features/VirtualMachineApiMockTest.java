@@ -112,7 +112,7 @@ public class VirtualMachineApiMockTest extends BaseAzureComputeApiMockTest {
 
    private VirtualMachineProperties getProperties() {
       HardwareProfile hwProf = HardwareProfile.create("Standard_D1");
-      ImageReference imgRef = ImageReference.create("publisher", "offer", "sku", "ver");
+      ImageReference imgRef = ImageReference.create("publisher", "offer", "sku", "ver", "eastasia");
       VHD vhd = VHD.create("https://groupname2760.blob.core.windows.net/vhds/windowsmachine201624102936.vhd");
       List<DataDisk> dataDisks = new ArrayList<DataDisk>();
       OSDisk osDisk = OSDisk.create("Windows", "windowsmachine", vhd, "ReadWrite", "FromImage");
