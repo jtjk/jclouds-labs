@@ -69,7 +69,7 @@ public class ImageReferenceToImage implements Function<ImageReference, Image> {
               .name(image.offer())
               .description(image.sku())
               .status(Image.Status.AVAILABLE)
-              .version(image.version())
+              .version(image.sku())
               .id(image.offer() + image.sku() + image.version())
               .providerId(image.publisher())
                .location(FluentIterable.from(locations.get())
@@ -106,7 +106,7 @@ public class ImageReferenceToImage implements Function<ImageReference, Image> {
                     family(family).
                     is64Bit(true).
                     description(image.sku()).
-                    version(image.version());
+                    version(image.sku());
          }
       };
    }

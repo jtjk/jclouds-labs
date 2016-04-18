@@ -108,6 +108,7 @@ public class DeploymentToNodeMetadata implements Function<Deployment, NodeMetada
       builder.name(from.name());
       NodeMetadata.Status status = STATUS_TO_NODESTATUS.get(provisioningStateFromString(from.properties().provisioningState()));
       builder.status(status);
+      
       //builder.hostname(getHostname(from));
       //builder.group(nodeNamingConvention.groupInUniqueNameOrNull(getHostname(from)));
 

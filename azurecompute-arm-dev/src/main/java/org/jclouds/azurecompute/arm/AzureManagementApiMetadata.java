@@ -73,6 +73,7 @@ public class AzureManagementApiMetadata extends BaseHttpApiMetadata<AzureCompute
                          .add(AzureComputeServiceContextModule.class)
                          .add(OAuthModule.class)
                          .add(OkHttpCommandExecutorServiceModule.class)
+
                          .add(AzureComputeHttpApiModule.class).build());
       }
 

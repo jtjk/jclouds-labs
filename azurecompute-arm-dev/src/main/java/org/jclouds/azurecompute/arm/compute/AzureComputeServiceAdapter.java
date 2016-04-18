@@ -39,7 +39,6 @@ import org.jclouds.azurecompute.arm.domain.Deployment;
 import org.jclouds.azurecompute.arm.domain.ImageReference;
 import org.jclouds.azurecompute.arm.domain.Location;
 import org.jclouds.azurecompute.arm.domain.Offer;
-import org.jclouds.azurecompute.arm.domain.Publisher;
 import org.jclouds.azurecompute.arm.domain.SKU;
 import org.jclouds.azurecompute.arm.domain.VMSize;
 import org.jclouds.azurecompute.arm.domain.VirtualMachine;
@@ -308,8 +307,8 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<Deploym
       // azure-specific options
       final AzureComputeArmTemplateOptions options = template.getOptions().as(AzureComputeArmTemplateOptions.class);
 
-      final String loginUser = autovalue.shaded.com.google.common.common.base.MoreObjects.firstNonNull(options.getLoginUser(), DEFAULT_LOGIN_USER);
-      final String loginPassword = autovalue.shaded.com.google.common.common.base.MoreObjects.firstNonNull(options.getLoginPassword(), DEFAULT_LOGIN_PASSWORD);
+      final String loginUser = options.getLoginUser() == null ? DEFAULT_LOGIN_USER : options.getLoginUser();
+      final String loginPassword = options.getLoginPassword() == null ? DEFAULT_LOGIN_PASSWORD : options.getLoginPassword();
       final String location = template.getLocation().getId();
       final String osVersion = template.getImage().getDescription();
 
@@ -366,11 +365,13 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<Deploym
 
    @Override
    public Iterable<VMSize> listHardwareProfiles() {
+      System.out.println("listHardwareProfiles");
+      System.out.println(api.getVMSizeApi(getLocation()).list().size());
       return api.getVMSizeApi(getLocation()).list();
    }
 
    private void getImagesFromPublisher(String publisherName, List<ImageReference> osImagesRef) {
-/*
+
       OSImageApi osImageApi = api.getOSImageApi(getLocation());
       Iterable<Offer> offerList = osImageApi.listOffers(publisherName);
       for (Offer offer : offerList) {
@@ -379,13 +380,6 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<Deploym
             osImagesRef.add(ImageReference.create(publisherName, offer.name(), sku.name(), null, getLocation()));
          }
       }
-      */
-      osImagesRef.add(ImageReference.create(publisherName, "Ubuntu", "10.04", null, "eastasia"));
-      osImagesRef.add(ImageReference.create(publisherName, "Ubuntu", "12.04", null, "eastasia"));
-      osImagesRef.add(ImageReference.create(publisherName, "Ubuntu", "12.10", null, "eastasia"));
-      osImagesRef.add(ImageReference.create(publisherName, "Ubuntu", "10.04", "", "eastasia"));
-      osImagesRef.add(ImageReference.create(publisherName, "Ubuntu", "12.04", "", "eastasia"));
-      osImagesRef.add(ImageReference.create(publisherName, "Ubuntu", "12.10", "", "eastasia"));
    }
 
    @Override

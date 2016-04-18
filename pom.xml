@@ -41,7 +41,7 @@
     <jclouds.version>2.0.0-SNAPSHOT</jclouds.version>
   </properties>
 
-  <repositories>
+  <!--repositories>
     <repository>
       <id>apache-snapshots</id>
       <url>https://repository.apache.org/content/repositories/snapshots</url>
@@ -62,27 +62,10 @@
         <enabled>true</enabled>
       </snapshots>
     </repository>
-  </repositories>
+  </repositories-->
 
   <modules>
-    <module>azurecompute-arm</module>
-    <module>azurecompute</module>
-    <module>etcd</module>
-    <module>docker</module>
-    <module>cdmi</module>
-    <module>cloudsigma2</module>
-    <module>cloudsigma2-hnl</module>
-    <module>cloudsigma2-lvs</module>
-    <module>cloudsigma2-mia</module>
-    <module>cloudsigma2-sjc</module>
-    <module>cloudsigma2-wdc</module>
-    <module>cloudsigma2-zrh</module>
-    <module>jdbc</module>
-    <module>h2-jdbc</module>
-    <module>joyent-cloudapi</module>
-    <module>joyentcloud</module>
-    <module>abiquo</module>
-    <module>profitbricks-rest</module>
+    <module>azurecompute-arm-dev</module>
   </modules>
 
   <build>

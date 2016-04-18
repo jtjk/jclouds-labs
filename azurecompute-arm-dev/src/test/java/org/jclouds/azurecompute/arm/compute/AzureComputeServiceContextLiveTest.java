@@ -78,6 +78,18 @@ public class AzureComputeServiceContextLiveTest extends BaseComputeServiceContex
 
    @Test
    public void testDefaultNode() throws RunNodesException {
+/*
+      ComputeService compute = view.getComputeService();
+      compute.listHardwareProfiles();
+
+      Set<? extends Image> images = compute.listImages();
+      System.out.printf(">> No of images %d%n", images.size());
+      for (Image img : images) {
+         System.out.println(">>>>  " + img);
+      }
+
+*/
+
       final String groupName = String.format("def%s", System.getProperty("user.name").substring(0, 3));
       final TemplateBuilder templateBuilder = view.getComputeService().templateBuilder();
       final Template template = templateBuilder.build();
