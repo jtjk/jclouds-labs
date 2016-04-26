@@ -23,16 +23,20 @@ import org.jclouds.azurecompute.arm.config.AzureComputeProperties;
 import org.jclouds.azurecompute.arm.internal.AzureLiveTestUtils;
 import org.jclouds.compute.RunNodesException;
 import org.jclouds.compute.config.ComputeServiceProperties;
+import org.jclouds.compute.domain.ExecResponse;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.OsFamily;
 import org.jclouds.compute.domain.Template;
 import org.jclouds.compute.domain.TemplateBuilder;
 import org.jclouds.compute.internal.BaseComputeServiceContextLiveTest;
 import org.jclouds.compute.options.TemplateOptions;
+import org.jclouds.domain.Credentials;
+import org.jclouds.domain.LoginCredentials;
 import org.jclouds.providers.ProviderMetadata;
 import org.jclouds.sshj.config.SshjSshClientModule;
 import org.testng.annotations.Test;
 
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -42,7 +46,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.jclouds.compute.config.ComputeServiceProperties.TIMEOUT_NODE_RUNNING;
 import static org.jclouds.compute.config.ComputeServiceProperties.TIMEOUT_SCRIPT_COMPLETE;
 import static org.jclouds.compute.predicates.NodePredicates.inGroup;
-
+import static org.jclouds.compute.options.TemplateOptions.Builder.overrideLoginCredentials;
+import static org.jclouds.scriptbuilder.domain.Statements.exec;
 
 
 @Test(groups = "live", testName = "AzureComputeServiceContextLiveTest", singleThreaded = true)
@@ -82,7 +87,36 @@ public class AzureComputeServiceContextLiveTest extends BaseComputeServiceContex
 
    @Test
    public void testDefault() throws RunNodesException {
-      final String groupName = String.format("def%s", System.getProperty("user.name"));
+
+      Credentials credentials = new Credentials("jclouds", "Password1!");
+      LoginCredentials login = LoginCredentials.fromCredentials(credentials);
+
+
+      String groupName = "defj13koski";
+      String command = "echo hello";
+      Map<? extends NodeMetadata, ExecResponse> responses = null;
+      try {
+         responses = view.getComputeService().runScriptOnNodesMatching(//
+                 inGroup(groupName), // predicate used to select nodes
+                 exec(command), // what you actually intend to run
+                 overrideLoginCredentials(login) // use my local user &
+                         // ssh key
+                         .runAsRoot(false) // don't attempt to run as root (sudo)
+                         .wrapInInitScript(false)); // run command directly
+      }
+      catch (Exception e) {
+
+      }
+
+
+
+      if (responses != null) {
+         for (int c = 0; c < responses.size(); c++) {
+            System.out.println(responses.toString());
+         }
+      }
+
+//      final String groupName = String.format("def%s", System.getProperty("user.name"));
       final TemplateBuilder templateBuilder = view.getComputeService().templateBuilder();
       final Template template = templateBuilder.build();
 
@@ -94,7 +128,28 @@ public class AzureComputeServiceContextLiveTest extends BaseComputeServiceContex
       }
    }
 
-//   @Test(dependsOnMethods = "testDefault")
+   @Test(dependsOnMethods = "testDefault")
+   public void testExec() throws RunNodesException {
+      Credentials credentials = new Credentials("jclouds", "Password1!");
+      LoginCredentials login = LoginCredentials.fromCredentials(credentials);
+
+      String groupName = "groupname";
+      String command = "echo hello";
+
+      try {
+         Map<? extends NodeMetadata, ExecResponse> responses = view.getComputeService().runScriptOnNodesMatching(//
+                 inGroup(groupName), // predicate used to select nodes
+                 exec(command), // what you actually intend to run
+                 overrideLoginCredentials(login) // use my local user &
+                         // ssh key
+                         .runAsRoot(false) // don't attempt to run as root (sudo)
+                         .wrapInInitScript(false)); // run command directly
+      } catch (Exception e) {
+
+      }
+   }
+
+   @Test(dependsOnMethods = "testExec")
    public void testLinuxNode() throws RunNodesException {
       final String groupName = String.format("ubu%s", System.getProperty("user.name"));
       final TemplateBuilder templateBuilder = view.getComputeService().templateBuilder();

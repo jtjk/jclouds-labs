@@ -60,12 +60,12 @@ public class DeploymentTemplateBuilder {
     private String loginUser;
     private String loginPassword;
 
-    private static final String DEFAULT_LOGIN_USER = "jclouds";
-    private static final String DEFAULT_LOGIN_PASSWORD = "p@sswOrd1!";
+    public static final String DEFAULT_LOGIN_USER = "jclouds";
+    public static final String DEFAULT_LOGIN_PASSWORD = "Password1!";
     private static final String DEPLOYMENT_MODE = "Incremental";
 
     public DeploymentTemplateBuilder(String name, Template template){
-        this.name = name.replaceAll("[^A-Za-z0-9 ]", "");
+        this.name = name;
         this.template = template;
         this.options = template.getOptions().as(AzureComputeArmTemplateOptions.class);
         this.variables = new HashMap<String, String>();
@@ -111,6 +111,8 @@ public class DeploymentTemplateBuilder {
 
     private void addStorageResource() {
         String storageAccountName = name + "storage";
+        storageAccountName = storageAccountName.replaceAll("[^A-Za-z0-9 ]", "");
+
         variables.put("storageAccountName", storageAccountName);
 
         ResourceDefinition storageAccount = ResourceDefinition.builder()
@@ -334,7 +336,7 @@ public class DeploymentTemplateBuilder {
                 .diagnosticsProfile(diagnosticsProfile)
                 .build();
 
-        variables.put("virtualMachineName", name + "VirtualMachine");
+        variables.put("virtualMachineName", name);
         ResourceDefinition virtualMachine = ResourceDefinition.builder()
                 .name("[variables('virtualMachineName')]")
                 .type("Microsoft.Compute/virtualMachines")
