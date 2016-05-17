@@ -145,7 +145,6 @@ public class DeploymentToNodeMetadata implements Function<VMDeployment, NodeMeta
                publicIpAddresses.add(ip.properties().ipAddress());
                break;
             }
-
          }
          if (publicIpAddresses.size() > 0)
             builder.publicAddresses(publicIpAddresses);
