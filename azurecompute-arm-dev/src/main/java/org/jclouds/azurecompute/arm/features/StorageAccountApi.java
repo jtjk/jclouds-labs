@@ -35,6 +35,8 @@ import org.jclouds.azurecompute.arm.domain.StorageService;
 import org.jclouds.azurecompute.arm.domain.StorageServiceKeys;
 import org.jclouds.azurecompute.arm.domain.StorageServiceUpdateParams;
 import org.jclouds.azurecompute.arm.functions.StatusCodeParser;
+import org.jclouds.azurecompute.arm.functions.URIParser;
+import org.jclouds.javax.annotation.Nullable;
 import org.jclouds.oauth.v2.filters.OAuthFilter;
 import org.jclouds.rest.annotations.Fallback;
 import org.jclouds.rest.annotations.QueryParams;
@@ -47,6 +49,7 @@ import org.jclouds.rest.annotations.PayloadParam;
 import org.jclouds.rest.annotations.MapBinder;
 import org.jclouds.rest.binders.BindToJsonPayload;
 
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
@@ -90,15 +93,17 @@ public interface StorageAccountApi {
     * https://msdn.microsoft.com/en-us/library/mt163564.aspx
     * PUT
     */
-   @Named("CreateStorageAccount")
+   @Named("storageaccount:create")
    @Payload("%7B\"location\":\"{location}\",\"tags\":{tags},\"properties\":{properties}%7D")
    @Path("/resourcegroups/{resourceGroup}/providers/Microsoft.Storage/storageAccounts/{storageAccountName}")
+   @Produces(MediaType.APPLICATION_JSON)
+   @ResponseParser(URIParser.class)
    @MapBinder(BindToJsonPayload.class)
    @PUT
-   CreateStorageServiceParams create(@PathParam("storageAccountName") String storageAccountName,
-                                     @PayloadParam("location") String location,
-                                     @PayloadParam("tags") Map<String, String> tags,
-                                     @PayloadParam("properties") Map<String, String> properties);
+   URI create(@PathParam("storageAccountName") String storageAccountName,
+              @PayloadParam("location") String location,
+              @Nullable @PayloadParam("tags") Map<String, String> tags,
+              @PayloadParam("properties") Map<String, String> properties);
 
    /**
     * The Check Storage Account Name Availability operation checks to see if the specified storage account name is

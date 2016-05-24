@@ -116,7 +116,7 @@ public class VirtualMachineApiMockTest extends BaseAzureComputeApiMockTest {
       ImageReference imgRef = ImageReference.create("publisher", "offer", "sku", "ver");
       VHD vhd = VHD.create("https://groupname2760.blob.core.windows.net/vhds/windowsmachine201624102936.vhd");
       List<DataDisk> dataDisks = new ArrayList<DataDisk>();
-      OSDisk osDisk = OSDisk.create("Windows", "windowsmachine", vhd, "ReadWrite", "FromImage");
+      OSDisk osDisk = OSDisk.create("Windows", "windowsmachine", vhd, "ReadWrite", "FromImage", null);
       StorageProfile storageProfile = StorageProfile.create(imgRef, osDisk, dataDisks);
       OSProfile.WindowsConfiguration windowsConfig = OSProfile.WindowsConfiguration.create(false, null, null, true,
               null);

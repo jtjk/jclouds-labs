@@ -20,15 +20,20 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.assertNotNull;
+
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import org.jclouds.azurecompute.arm.domain.CreateStorageServiceParams;
 import org.jclouds.azurecompute.arm.domain.StorageService;
 import org.jclouds.azurecompute.arm.domain.StorageServiceKeys;
 import org.jclouds.azurecompute.arm.domain.StorageServiceUpdateParams;
+import org.jclouds.azurecompute.arm.functions.ParseJobStatus;
 import org.jclouds.azurecompute.arm.internal.BaseAzureComputeApiLiveTest;
+import org.jclouds.util.Predicates2;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
+import java.net.URI;
 import java.util.List;
 
 @Test(groups = "live", testName = "StorageAccountApiLiveTest")
@@ -72,19 +77,22 @@ public class StorageAccountApiLiveTest extends BaseAzureComputeApiLiveTest {
    @Test(dependsOnMethods = "testIsAvailable")
    public void testCreate() {
 
-      CreateStorageServiceParams storage = api().create(NAME, LOCATION, ImmutableMap.of("property_name",
-              "property_value"), ImmutableMap.of("accountType", StorageService.AccountType.Standard_ZRS.toString()));
-      while (storage == null) {
-         try {
-            Thread.sleep(25 * 1000);
-         } catch (InterruptedException e) {
-            e.printStackTrace();
-         }
-         storage = api().create(NAME, LOCATION, ImmutableMap.of("property_name", "property_value"),
-                 ImmutableMap.of("accountType", StorageService.AccountType.Standard_ZRS.toString()));
+      URI uri = api().create(NAME, LOCATION, ImmutableMap.of("property_name",
+            "property_value"), ImmutableMap.of("accountType", StorageService.AccountType.Standard_LRS.toString()));
+      if (uri != null){
+         assertTrue(uri.toString().contains("api-version"));
+
+         boolean jobDone = Predicates2.retry(new Predicate<URI>() {
+            @Override public boolean apply(URI uri) {
+               return ParseJobStatus.JobStatus.DONE == api.getJobApi().jobStatus(uri);
+            }
+         }, 60 * 1 * 1000 /* 1 minute timeout */).apply(uri);
+         assertTrue(jobDone, "create operation did not complete in the configured timeout");
       }
-      assertEquals(storage.location(), LOCATION);
-      assertTrue(!storage.properties().isEmpty());
+      final StorageService service = api().get(NAME);
+      assertNotNull(service);
+      assertEquals(service.location(), LOCATION);
+      assertNotNull(service.storageServiceProperties().creationTime());
    }
 
    @Test(dependsOnMethods = "testCreate")

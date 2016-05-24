@@ -16,7 +16,9 @@
  */
 package org.jclouds.azurecompute.arm.internal;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 
 import org.jclouds.azurecompute.arm.domain.AddressSpace;
@@ -37,10 +39,13 @@ import org.jclouds.azurecompute.arm.features.SubnetApi;
 import org.jclouds.azurecompute.arm.features.NetworkInterfaceCardApi;
 import org.jclouds.azurecompute.arm.features.VirtualNetworkApi;
 
+import org.jclouds.azurecompute.arm.functions.ParseJobStatus;
+import org.jclouds.util.Predicates2;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 
+import java.net.URI;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -150,18 +155,18 @@ public class BaseAzureComputeApiLiveTest extends AbstractAzureComputeApiLiveTest
       if (ss != null) {
          return ss;
       }
-      CreateStorageServiceParams response = storageApi.create(storageServiceName, params.location(), params.tags(),
+      URI uri = storageApi.create(storageServiceName, params.location(), params.tags(),
               params.properties());
-      while (response == null) {
-         try {
-            Thread.sleep(25 * 1000);
-         } catch (InterruptedException e) {
-            e.printStackTrace();
-         }
-         response = storageApi.create(storageServiceName, params.location(), params.tags(),
-                 params.properties());
+      if (uri != null){
+         assertTrue(uri.toString().contains("api-version"));
+
+         boolean jobDone = Predicates2.retry(new Predicate<URI>() {
+            @Override public boolean apply(URI uri) {
+               return ParseJobStatus.JobStatus.DONE == api.getJobApi().jobStatus(uri);
+            }
+         }, 60 * 1 * 1000 /* 1 minute timeout */).apply(uri);
+         assertTrue(jobDone, "create operation did not complete in the configured timeout");
       }
-      Assert.assertEquals(response.location(), LOCATION);
       ss = storageApi.get(storageServiceName);
 
       Logger.getAnonymousLogger().log(Level.INFO, "created storageService: {0}", ss);

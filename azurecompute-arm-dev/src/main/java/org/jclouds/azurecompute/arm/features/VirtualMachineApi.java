@@ -27,11 +27,15 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import org.jclouds.Fallbacks;
+import org.jclouds.azurecompute.arm.domain.DeploymentTemplate;
 import org.jclouds.azurecompute.arm.domain.VirtualMachine;
 import org.jclouds.azurecompute.arm.domain.VirtualMachineInstance;
 import org.jclouds.azurecompute.arm.domain.VirtualMachineProperties;
+import org.jclouds.azurecompute.arm.functions.ParseJobStatus;
+import org.jclouds.azurecompute.arm.functions.StatusCodeParser;
 import org.jclouds.azurecompute.arm.functions.URIParser;
 import org.jclouds.oauth.v2.filters.OAuthFilter;
+import org.jclouds.rest.annotations.EndpointParam;
 import org.jclouds.rest.annotations.Fallback;
 import org.jclouds.rest.annotations.Payload;
 import org.jclouds.rest.annotations.MapBinder;
@@ -136,6 +140,30 @@ public interface VirtualMachineApi {
    @Path("/{name}/powerOff")
    @Fallback(Fallbacks.VoidOnNotFoundOr404.class)
    void stop(@PathParam("name") String name);
+
+   /**
+    * Generalize the virtual machine
+    */
+   @Named("generalize")
+   @POST
+   @Path("/{name}/generalize")
+   @ResponseParser(StatusCodeParser.class)
+   String generalize(@PathParam("name") String name);
+
+   /**
+    * Capture the virtual machine image
+    */
+   @Named("capture")
+   @POST
+   @Payload("%7B\"vhdPrefix\":\"{vhdPrefix}\",\"destinationContainerName\":\"{destinationContainerName}\",\"overwriteVhds\":\"true\"%7D")
+   @MapBinder(BindToJsonPayload.class)
+   @Path("/{name}/capture")
+   @ResponseParser(URIParser.class)
+   URI capture(@PathParam("name") String name,
+                  @PayloadParam("vhdPrefix") String vhdPrefix,
+                  @PayloadParam("destinationContainerName") String destinationContainerName);
+
+
 
 }
 

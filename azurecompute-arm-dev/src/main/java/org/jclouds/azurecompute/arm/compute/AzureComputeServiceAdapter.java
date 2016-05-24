@@ -17,6 +17,7 @@
 package org.jclouds.azurecompute.arm.compute;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.jclouds.compute.config.ComputeServiceProperties.TIMEOUT_IMAGE_AVAILABLE;
 import static org.jclouds.util.Predicates2.retry;
 
 import java.net.URI;
@@ -34,8 +35,10 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.net.UrlEscapers;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.inject.Provides;
 import org.jclouds.azurecompute.arm.AzureComputeApi;
 import org.jclouds.azurecompute.arm.compute.config.AzureComputeServiceContextModule.AzureComputeConstants;
+import org.jclouds.azurecompute.arm.compute.utils.ImageHelper;
 import org.jclouds.azurecompute.arm.domain.Deployment;
 import org.jclouds.azurecompute.arm.domain.DeploymentBody;
 import org.jclouds.azurecompute.arm.domain.DeploymentProperties;
@@ -72,6 +75,7 @@ import org.jclouds.util.Predicates2;
 public class AzureComputeServiceAdapter implements ComputeServiceAdapter<VMDeployment, VMSize, ImageReference, Location> {
 
    private static int runningNumber = 1;
+   private final String azureGroup;
 
    @Resource
    @Named(ComputeServiceConstants.COMPUTE_LOGGER)
@@ -82,10 +86,12 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<VMDeplo
    private final AzureComputeConstants azureComputeConstants;
 
    @Inject
-   AzureComputeServiceAdapter(final AzureComputeApi api, final AzureComputeConstants azureComputeConstants) {
+   AzureComputeServiceAdapter(final AzureComputeApi api, final AzureComputeConstants azureComputeConstants,
+                              @Named("azureGroupId") String group) {
 
       this.api = api;
       this.azureComputeConstants = azureComputeConstants;
+      this.azureGroup = group;
    }
 
    @Override
@@ -116,12 +122,12 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<VMDeplo
 
 
             ResourceGroupApi resourceGroupApi = api.getResourceGroupApi();
-            ResourceGroup resourceGroup = resourceGroupApi.get(getGroupId());
+            ResourceGroup resourceGroup = resourceGroupApi.get(azureGroup);
             String resourceGroupName;
 
             if (resourceGroup == null){
                final Map<String, String> tags = ImmutableMap.of("description", "jClouds managed VMs");
-               resourceGroupName = resourceGroupApi.create(getGroupId(), location, tags).name();
+               resourceGroupName = resourceGroupApi.create(azureGroup, location, tags).name();
             } else {
                resourceGroupName = resourceGroup.name();
             }
@@ -157,35 +163,23 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<VMDeplo
       return api.getVMSizeApi(getLocation()).list();
    }
 
-   private void getImagesFromPublisher(String publisherName, List<ImageReference> osImagesRef) {
-      OSImageApi osImageApi = api.getOSImageApi(getLocation());
-      Iterable<Offer> offerList = osImageApi.listOffers(publisherName);
-      for (Offer offer : offerList) {
-         Iterable<SKU> skuList = osImageApi.listSKUs(publisherName, offer.name());
-         for (SKU sku : skuList) {
-            osImagesRef.add(ImageReference.create(publisherName, offer.name(), sku.name(), null));
-         }
-      }
-   }
-
    @Override
    public Iterable<ImageReference> listImages() {
-      final List<ImageReference> osImages = Lists.newArrayList();
-      getImagesFromPublisher("Microsoft.WindowsAzure.Compute", osImages);
-      getImagesFromPublisher("MicrosoftWindowsServer", osImages);
-      getImagesFromPublisher("Canonical", osImages);
-      return osImages;
+      ImageHelper helper = new ImageHelper(api, getLocation());
+      return helper.listImages();
    }
 
    @Override
    public ImageReference getImage(final String id) {
-      Iterable<ImageReference> images = listImages();
-      for (ImageReference image : images) {
-         if (id.contains(image.offer()) && id.contains(image.sku())) {
-            return image;
-         }
+      if (id.substring(0, 6).equals("custom")) {
+         String storage = id.substring(6, 19);
+         String vhd = id.substring(19);
+         final ImageReference ref = ImageReference.create("custom" + azureGroup, "custom" + storage, vhd, null);
+         return ref;
       }
-      return null;
+      ImageHelper helper = new ImageHelper(api, getLocation());
+
+      return helper.getImage(id);
    }
 
    private String getLocation() {
@@ -209,7 +203,7 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<VMDeplo
 
    @Override
    public VMDeployment getNode(final String id) {
-      Deployment deployment = api.getDeploymentApi(getGroupId()).getDeployment(id);
+      Deployment deployment = api.getDeploymentApi(azureGroup).getDeployment(id);
       if (deployment == null)
          return null;
       String resourceGroup = getResourceGroupFromId(deployment.id());
@@ -217,6 +211,7 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<VMDeplo
       vmDeployment.deployment = deployment;
       List<PublicIPAddress> list = getIPAddresses(deployment);
       vmDeployment.ipAddressList = list;
+      vmDeployment.vm = api.getVirtualMachineApi(azureGroup).getInstanceDetails(id);
       return vmDeployment;
    }
 
@@ -228,7 +223,7 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<VMDeplo
       String group = id.substring(0, index);
 
       // Delete VM
-      URI uri = api.getVirtualMachineApi(getGroupId()).delete(id);
+      URI uri = api.getVirtualMachineApi(azureGroup).delete(id);
       if (uri != null){
          boolean jobDone = Predicates2.retry(new Predicate<URI>() {
             @Override public boolean apply(URI uri) {
@@ -238,10 +233,10 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<VMDeplo
 
          if (jobDone) {
             // Delete storage account
-            api.getStorageAccountApi(getGroupId()).delete(storageAccountName);
+            api.getStorageAccountApi(azureGroup).delete(storageAccountName);
 
             // Delete NIC
-            uri = api.getNetworkInterfaceCardApi(getGroupId()).deleteNetworkInterfaceCard(id + "nic");
+            uri = api.getNetworkInterfaceCardApi(azureGroup).deleteNetworkInterfaceCard(id + "nic");
             if (uri != null){
                jobDone = Predicates2.retry(new Predicate<URI>() {
                   @Override public boolean apply(URI uri) {
@@ -251,13 +246,13 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<VMDeplo
                }, 60 * 10 * 1000 /* 5 minute timeout */).apply(uri);
                if (jobDone) {
                   // Delete public ip
-                  api.getPublicIPAddressApi(getGroupId()).deletePublicIPAddress(id + "publicip");
+                  api.getPublicIPAddressApi(azureGroup).deletePublicIPAddress(id + "publicip");
 
                   // Delete deployment
-                  api.getDeploymentApi(getGroupId()).deleteDeployment(id);
+                  api.getDeploymentApi(azureGroup).deleteDeployment(id);
 
                   // Delete Virtual network
-                  api.getVirtualNetworkApi(getGroupId()).deleteVirtualNetwork(group + "virtualnetwork");
+                  api.getVirtualNetworkApi(azureGroup).deleteVirtualNetwork(group + "virtualnetwork");
                }
             }
          }
@@ -266,17 +261,17 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<VMDeplo
 
    @Override
    public void rebootNode(final String id) {
-      api.getVirtualMachineApi(getGroupId()).restart(id);
+      api.getVirtualMachineApi(azureGroup).restart(id);
    }
 
    @Override
    public void resumeNode(final String id) {
-      api.getVirtualMachineApi(getGroupId()).start(id);
+      api.getVirtualMachineApi(azureGroup).start(id);
    }
 
    @Override
    public void suspendNode(final String id) {
-      api.getVirtualMachineApi(getGroupId()).stop(id);
+      api.getVirtualMachineApi(azureGroup).stop(id);
    }
 
    private List<PublicIPAddress> getIPAddresses(Deployment deployment) {
@@ -305,7 +300,7 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<VMDeplo
    public Iterable<VMDeployment> listNodes() {
       System.out.println("listNodes");
 
-      List<Deployment> deployments = api.getDeploymentApi(getGroupId()).listDeployments();
+      List<Deployment> deployments = api.getDeploymentApi(azureGroup).listDeployments();
 
       System.out.println("Found " + deployments.size() + " nodes");
       List<VMDeployment> vmDeployments = new ArrayList<VMDeployment>();
@@ -313,7 +308,7 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<VMDeplo
       for (Deployment d : deployments){
          VMDeployment vmDeployment = new VMDeployment();
          vmDeployment.deployment = d;
-         vmDeployment.vm = api.getVirtualMachineApi(getGroupId()).getInstanceDetails(d.name());
+         vmDeployment.vm = api.getVirtualMachineApi(azureGroup).getInstanceDetails(d.name());
          List<PublicIPAddress> list = getIPAddresses(d);
          vmDeployment.ipAddressList = list;
          vmDeployments.add(vmDeployment);
@@ -333,13 +328,6 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<VMDeplo
             return Iterables.contains(ids, input.deployment.name());
          }
       });
-   }
-
-   private String getGroupId() {
-      String group =  System.getProperty("test.azurecompute-arm.groupname");
-      if (group == null)
-         group = "jCloudsGroup";
-      return group;
    }
 
 }

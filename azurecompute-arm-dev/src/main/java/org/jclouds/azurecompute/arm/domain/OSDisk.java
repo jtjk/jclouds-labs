@@ -52,15 +52,22 @@ public abstract class OSDisk {
    @Nullable
    public abstract String createOption();
 
-   @SerializedNames({"osType", "name", "vhd", "caching", "createOption"})
+   /**
+    * The url of the custom image
+    */
+   @Nullable
+   public abstract VHD image();
+
+   @SerializedNames({"osType", "name", "vhd", "caching", "createOption", "image"})
    public static OSDisk create(final String osType, final String name, final VHD vhd,
-                               final String caching, final String createOption) {
+                               final String caching, final String createOption, final VHD image) {
       return builder()
               .osType(osType)
               .name(name)
               .vhd(vhd)
               .caching(caching)
               .createOption(createOption)
+              .image(image)
               .build();
    }
 
@@ -75,6 +82,7 @@ public abstract class OSDisk {
       public abstract Builder caching(String caching);
       public abstract Builder createOption(String createOption);
       public abstract Builder vhd(VHD vhd);
+      public abstract Builder image(VHD image);
       public abstract OSDisk build();
    }
 }

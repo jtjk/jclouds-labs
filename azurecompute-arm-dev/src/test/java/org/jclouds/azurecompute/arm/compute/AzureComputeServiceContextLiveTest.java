@@ -16,8 +16,10 @@
  */
 package org.jclouds.azurecompute.arm.compute;
 
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Module;
 import org.jclouds.azurecompute.arm.AzureComputeProviderMetadata;
 import org.jclouds.azurecompute.arm.compute.options.AzureComputeArmTemplateOptions;
@@ -28,10 +30,13 @@ import org.jclouds.compute.RunScriptOnNodesException;
 import org.jclouds.compute.config.ComputeServiceProperties;
 import org.jclouds.compute.domain.ComputeMetadata;
 import org.jclouds.compute.domain.ExecResponse;
+import org.jclouds.compute.domain.Image;
+import org.jclouds.compute.domain.ImageTemplate;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.OsFamily;
 import org.jclouds.compute.domain.Template;
 import org.jclouds.compute.domain.TemplateBuilder;
+import org.jclouds.compute.extensions.ImageExtension;
 import org.jclouds.compute.internal.BaseComputeServiceContextLiveTest;
 import org.jclouds.compute.options.TemplateOptions;
 import org.jclouds.domain.Credentials;
@@ -43,6 +48,7 @@ import org.testng.annotations.Test;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -52,12 +58,14 @@ import static org.jclouds.compute.config.ComputeServiceProperties.TIMEOUT_SCRIPT
 import static org.jclouds.compute.predicates.NodePredicates.inGroup;
 import static org.jclouds.compute.options.TemplateOptions.Builder.overrideLoginCredentials;
 import static org.jclouds.scriptbuilder.domain.Statements.exec;
+import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 @Test(groups = "live", testName = "AzureComputeServiceContextLiveTest")
 public class AzureComputeServiceContextLiveTest extends BaseComputeServiceContextLiveTest {
 
    public static String NAME_PREFIX = "azu%s";
+   String nodeId;
 
    @Override
    protected Module getSshModule() {
@@ -95,13 +103,20 @@ public class AzureComputeServiceContextLiveTest extends BaseComputeServiceContex
    public void testDefault() throws RunNodesException {
       final String groupName = String.format(NAME_PREFIX, System.getProperty("user.name").substring(0, 3));
       final TemplateBuilder templateBuilder = view.getComputeService().templateBuilder();
+      templateBuilder.osFamily(OsFamily.UBUNTU);
+      templateBuilder.osVersionMatches("14.04");
+      templateBuilder.hardwareId("Standard_A0");
+      templateBuilder.locationId("westus");
       final Template template = templateBuilder.build();
 
       try {
          Set<? extends NodeMetadata> nodes = view.getComputeService().createNodesInGroup(groupName, 1, template);
          assertThat(nodes).hasSize(1);
+         for (NodeMetadata node : nodes) {
+            nodeId = node.getId();
+         }
       } finally {
-// Do not destroy         view.getComputeService().destroyNodesMatching(inGroup(groupName));
+         view.getComputeService().destroyNodesMatching(inGroup(groupName));
       }
    }
 
