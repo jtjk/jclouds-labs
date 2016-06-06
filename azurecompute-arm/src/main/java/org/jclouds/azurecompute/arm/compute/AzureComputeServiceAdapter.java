@@ -249,6 +249,12 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<VMDeplo
    @Override
    public VMImage getImage(final String id) {
       String[] fields = VMImageToImage.decodeFieldsFromUniqueId(id);
+      if (fields[2].substring(0, 6).equals("custom")) {
+         String storage = fields[2].substring(6, 19);
+         String vhd = fields[3];
+         VMImage ref = new VMImage("custom" + azureGroup, "custom" + storage, vhd, null, fields[0]);
+         return ref;
+      }
 
       Iterable<VMImage> images = listImages();
 
@@ -306,6 +312,7 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<VMDeplo
       vmDeployment.deployment = deployment;
       List<PublicIPAddress> list = getIPAddresses(deployment);
       vmDeployment.ipAddressList = list;
+      vmDeployment.vm = api.getVirtualMachineApi(azureGroup).getInstanceDetails(id);
       return vmDeployment;
    }
 
