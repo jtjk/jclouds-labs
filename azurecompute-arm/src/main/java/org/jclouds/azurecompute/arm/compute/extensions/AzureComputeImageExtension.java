@@ -41,7 +41,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-import static com.google.inject.internal.util.$Preconditions.checkState;
 
 public class AzureComputeImageExtension implements ImageExtension {
    private final AzureComputeApi api;
@@ -68,10 +67,9 @@ public class AzureComputeImageExtension implements ImageExtension {
 
    @Override
    public ListenableFuture<Image> createImage(ImageTemplate template) {
-      checkState(template instanceof CloneImageTemplate, "AzureCompute arm only supports creating images through cloning.");
       final CloneImageTemplate cloneTemplate = (CloneImageTemplate) template;
       String id = cloneTemplate.getSourceNodeId();
-      final String storageAccountName = id.replaceAll("[^A-Za-z0-9 ]", "") + "storage";
+      final String storageAccountName = id.replaceAll("[^A-Za-z0-9 ]", "") + "stor";
 
       boolean generalized = false;
       while (!generalized) {

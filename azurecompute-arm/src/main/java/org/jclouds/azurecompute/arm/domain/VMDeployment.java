@@ -18,6 +18,7 @@ package org.jclouds.azurecompute.arm.domain;
 
 
 import java.util.List;
+import java.util.Map;
 
 public class VMDeployment {
 
@@ -26,4 +27,8 @@ public class VMDeployment {
    public List<PublicIPAddress> ipAddressList;
 
    public VirtualMachineInstance vm;
+
+   public Map<String, String> userMetaData;
+
+   public Iterable<String> tags;
 }

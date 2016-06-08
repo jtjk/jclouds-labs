@@ -16,9 +16,10 @@
  */
 package org.jclouds.azurecompute.arm.util;
 
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.inject.assistedinject.Assisted;
 
+import org.apache.commons.lang3.StringUtils;
 import org.jclouds.azurecompute.arm.compute.config.AzureComputeServiceContextModule;
 import org.jclouds.azurecompute.arm.compute.extensions.AzureComputeImageExtension;
 import org.jclouds.azurecompute.arm.domain.DeploymentProperties;
@@ -72,6 +73,8 @@ public class DeploymentTemplateBuilder {
    private final Json json;
 
    private TemplateOptions options;
+   private Iterable<String> tags;
+   private Map<String, String> userMetaData;
    private List<ResourceDefinition> resources;
    private Map<String, String> variables;
    private static String loginUser;
@@ -92,6 +95,8 @@ public class DeploymentTemplateBuilder {
       this.group = group;
       this.template = template;
       this.options = template.getOptions().as(TemplateOptions.class);
+      this.tags = template.getOptions().getTags();
+      this.userMetaData = template.getOptions().getUserMetadata();
       this.variables = new HashMap<String, String>();
       this.resources = new ArrayList<ResourceDefinition>();
       this.location = template.getLocation().getId();
@@ -113,7 +118,7 @@ public class DeploymentTemplateBuilder {
    }
 
    public static String getLoginUserUsername() {
-      return loginUser;
+      return "jclouds";
    }
 
    public static String getLoginPassword() {
@@ -150,7 +155,7 @@ public class DeploymentTemplateBuilder {
    }
 
    private void addStorageResource() {
-      String storageAccountName = name.replaceAll("[^A-Za-z0-9 ]", "") + "storage";
+      String storageAccountName = name.replaceAll("[^A-Za-z0-9 ]", "") + "stor";
 
       String storageName = template.getImage().getName();
       if (storageName.substring(0, 6).equals("custom")) {
@@ -382,6 +387,11 @@ public class DeploymentTemplateBuilder {
             .diagnosticsProfile(diagnosticsProfile)
             .build();
 
+      String tagString = StringUtils.join(Lists.newArrayList(tags), ",");
+      if (tagString.isEmpty())
+         tagString = "jclouds";
+      userMetaData.put("tags", tagString);
+
       variables.put("virtualMachineName", name);
       ResourceDefinition virtualMachine = ResourceDefinition.builder()
             .name("[variables('virtualMachineName')]")
@@ -390,7 +400,7 @@ public class DeploymentTemplateBuilder {
             .apiVersion("2015-06-15")
             .dependsOn(Arrays.asList("[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
                   "[concat('Microsoft.Network/networkInterfaces/', variables('networkInterfaceCardName'))]"))
-            .tags(ImmutableMap.of("displayName", "VirtualMachine"))
+            .tags(userMetaData)
             .properties(properties)
             .build();
 

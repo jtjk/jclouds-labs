@@ -23,6 +23,7 @@ import static org.jclouds.util.Predicates2.retry;
 import java.net.URI;
 import java.util.ArrayList;
 
+import java.util.Arrays;
 import java.util.Collection;
 
 import java.util.List;
@@ -51,6 +52,7 @@ import org.jclouds.azurecompute.arm.domain.ResourceProviderMetaData;
 import org.jclouds.azurecompute.arm.domain.SKU;
 import org.jclouds.azurecompute.arm.domain.VMDeployment;
 import org.jclouds.azurecompute.arm.domain.VMSize;
+import org.jclouds.azurecompute.arm.domain.VirtualMachine;
 import org.jclouds.azurecompute.arm.features.DeploymentApi;
 import org.jclouds.azurecompute.arm.features.OSImageApi;
 import org.jclouds.azurecompute.arm.util.DeploymentTemplateBuilder;
@@ -313,13 +315,20 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<VMDeplo
       List<PublicIPAddress> list = getIPAddresses(deployment);
       vmDeployment.ipAddressList = list;
       vmDeployment.vm = api.getVirtualMachineApi(azureGroup).getInstanceDetails(id);
+      VirtualMachine vm = api.getVirtualMachineApi(azureGroup).get(id);
+      if (vm != null && vm.tags() != null) {
+         vmDeployment.userMetaData = vm.tags();
+         String tagString = vmDeployment.userMetaData.get("tags");
+         List<String> tags = Arrays.asList(tagString.split(","));
+         vmDeployment.tags = tags;
+      }
       return vmDeployment;
    }
 
    @Override
    public void destroyNode(final String id) {
       logger.debug("Destroying %s ...", id);
-      String storageAccountName = id.replaceAll("[^A-Za-z0-9 ]", "") + "storage";
+      String storageAccountName = id.replaceAll("[^A-Za-z0-9 ]", "") + "stor";
       int index = id.lastIndexOf("-");
       String group = id.substring(0, index);
 
@@ -402,6 +411,13 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<VMDeplo
          List<PublicIPAddress> list = getIPAddresses(d);
          vmDeployment.ipAddressList = list;
          vmDeployments.add(vmDeployment);
+         VirtualMachine vm = api.getVirtualMachineApi(azureGroup).get(d.name());
+         if (vm != null && vm.tags() != null) {
+            vmDeployment.userMetaData = vm.tags();
+            String tagString = vmDeployment.userMetaData.get("tags");
+            List<String> tags = Arrays.asList(tagString.split(","));
+            vmDeployment.tags = tags;
+         }
       }
       return vmDeployments;
    }

@@ -92,7 +92,7 @@ public class CreateResourceGroupThenCreateNodes extends CreateNodesWithGroupEnco
          resourceGroupName = resourceGroup.name();
       }
 
-      Map<?, ListenableFuture<Void>> responses = super.execute(resourceGroupName, count, template, goodNodes, badNodes,
+      Map<?, ListenableFuture<Void>> responses = super.execute(group, count, template, goodNodes, badNodes,
               customizationResponses);
 
       return responses;

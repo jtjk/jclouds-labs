@@ -16,7 +16,14 @@
  */
 package org.jclouds.azurecompute.arm.compute;
 
+import org.jclouds.compute.JettyStatements;
+import org.jclouds.compute.RunNodesException;
+import org.jclouds.compute.domain.NodeMetadata;
+import org.jclouds.compute.domain.OsFamily;
+import org.jclouds.compute.domain.Template;
+import org.jclouds.compute.domain.TemplateBuilder;
 import org.jclouds.compute.internal.BaseComputeServiceLiveTest;
+import org.jclouds.compute.options.RunScriptOptions;
 import org.jclouds.sshj.config.SshjSshClientModule;
 import org.testng.annotations.Test;
 
@@ -24,13 +31,13 @@ import org.jclouds.providers.ProviderMetadata;
 
 import org.jclouds.azurecompute.arm.AzureComputeProviderMetadata;
 
-import static org.jclouds.azurecompute.arm.config.AzureComputeProperties.RESOURCE_GROUP_NAME;
 import static org.jclouds.compute.config.ComputeServiceProperties.TIMEOUT_NODE_RUNNING;
 import static org.jclouds.compute.config.ComputeServiceProperties.TIMEOUT_SCRIPT_COMPLETE;
 import org.jclouds.azurecompute.arm.internal.AzureLiveTestUtils;
 
 import com.google.inject.Module;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -69,5 +76,28 @@ public class AzureComputeServiceLiveTest extends BaseComputeServiceLiveTest {
 
       return properties;
 
+   }
+
+   @Test protected void testRunScript() {
+      final String groupName = "abc";
+      /*
+      final TemplateBuilder templateBuilder = view.getComputeService().templateBuilder();
+      templateBuilder.osFamily(OsFamily.UBUNTU);
+      templateBuilder.osVersionMatches("14.04");
+      templateBuilder.hardwareId("Standard_A0");
+      templateBuilder.locationId("westus");
+
+      final Template template = templateBuilder.build();
+
+      Set<? extends NodeMetadata> nodes = null;
+      try {
+         nodes = this.client.createNodesInGroup(groupName, 1, template);
+      } catch (RunNodesException e) {
+         e.printStackTrace();
+      }
+      NodeMetadata node = nodes.iterator().next();
+      this.client.runScriptOnNode(node.getId(), JettyStatements.install(), RunScriptOptions.Builder.nameTask("configure-jetty"));
+*/
+      this.client.runScriptOnNode("abc-868", JettyStatements.install(), RunScriptOptions.Builder.nameTask("configure-jetty"));
    }
 }
