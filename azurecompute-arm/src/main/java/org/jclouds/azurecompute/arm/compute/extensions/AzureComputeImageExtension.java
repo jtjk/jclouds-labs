@@ -24,6 +24,7 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.jclouds.Constants;
 import org.jclouds.azurecompute.arm.AzureComputeApi;
+import org.jclouds.azurecompute.arm.compute.config.AzureComputeServiceContextModule;
 import org.jclouds.azurecompute.arm.compute.functions.VMImageToImage;
 import org.jclouds.azurecompute.arm.domain.ResourceDefinition;
 import org.jclouds.azurecompute.arm.domain.VMImage;
@@ -50,12 +51,11 @@ public class AzureComputeImageExtension implements ImageExtension {
    public static final String CONTAINER_NAME = "vhdsnew";
 
    @Inject
-   AzureComputeImageExtension(AzureComputeApi api,
+   AzureComputeImageExtension(AzureComputeApi api, final AzureComputeServiceContextModule.AzureComputeConstants azureComputeConstants,
                               @Named(Constants.PROPERTY_USER_THREADS) ListeningExecutorService userExecutor,
-                              @Named("azureGroupId") String group,
                               VMImageToImage imageReferenceToImage) {
       this.userExecutor = userExecutor;
-      this.group = group;
+      this.group = azureComputeConstants.azureResourceGroup();
       this.imageReferenceToImage = imageReferenceToImage;
       this.api = api;
    }

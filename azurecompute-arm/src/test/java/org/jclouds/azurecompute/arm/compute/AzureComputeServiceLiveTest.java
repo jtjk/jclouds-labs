@@ -39,7 +39,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @Test(groups = "live", singleThreaded = true, testName = "AzureComputeServiceLiveTest")
 public class AzureComputeServiceLiveTest extends BaseComputeServiceLiveTest {
-   public String azureGroup;
+   //public String azureGroup;
 
    public AzureComputeServiceLiveTest() {
       provider = "azurecompute-arm";
@@ -57,12 +57,12 @@ public class AzureComputeServiceLiveTest extends BaseComputeServiceLiveTest {
    }
 
    @Override protected Properties setupProperties() {
-      azureGroup = "jc" + System.getProperty("user.name").substring(0, 3);
+      //azureGroup = "jc" + System.getProperty("user.name").substring(0, 3);
       Properties properties = super.setupProperties();
       long scriptTimeout = TimeUnit.MILLISECONDS.convert(20, TimeUnit.MINUTES);
       properties.setProperty(TIMEOUT_SCRIPT_COMPLETE, scriptTimeout + "");
       properties.setProperty(TIMEOUT_NODE_RUNNING, scriptTimeout + "");
-      properties.put(RESOURCE_GROUP_NAME, azureGroup);
+      //properties.put(RESOURCE_GROUP_NAME, azureGroup);
 
       AzureLiveTestUtils.defaultProperties(properties);
       checkNotNull(setIfTestSystemPropertyPresent(properties, "oauth.endpoint"), "test.oauth.endpoint");
