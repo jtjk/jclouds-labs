@@ -16,6 +16,10 @@
  */
 package org.jclouds.azurecompute.arm.compute;
 
+import com.google.common.base.Stopwatch;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import org.jclouds.compute.JettyStatements;
 import org.jclouds.compute.RunNodesException;
 import org.jclouds.compute.domain.NodeMetadata;
@@ -24,6 +28,7 @@ import org.jclouds.compute.domain.Template;
 import org.jclouds.compute.domain.TemplateBuilder;
 import org.jclouds.compute.internal.BaseComputeServiceLiveTest;
 import org.jclouds.compute.options.RunScriptOptions;
+import org.jclouds.compute.predicates.NodePredicates;
 import org.jclouds.sshj.config.SshjSshClientModule;
 import org.testng.annotations.Test;
 
@@ -39,6 +44,8 @@ import com.google.inject.Module;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -98,4 +105,5 @@ public class AzureComputeServiceLiveTest extends BaseComputeServiceLiveTest {
       this.client.runScriptOnNode(node.getId(), JettyStatements.install(), RunScriptOptions.Builder.nameTask("configure-jetty"));
 //      this.client.runScriptOnNode("abc-868", JettyStatements.install(), RunScriptOptions.Builder.nameTask("configure-jetty"));
    }
+
 }

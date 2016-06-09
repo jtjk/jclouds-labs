@@ -156,7 +156,7 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<VMDeplo
       Iterable<Location> locations = listLocations();
       for (Location location : locations){
          locationIds.add(location.name());
-
+/*
          Iterable<VMSize> vmSizes = api.getVMSizeApi(location.name()).list();
 
          for (VMSize vmSize : vmSizes){
@@ -170,6 +170,16 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<VMDeplo
             hwProfile.location = location.name();
             hwProfiles.add(hwProfile);
          }
+*/
+         VMHardware hwProfile = new VMHardware();
+         hwProfile.name = "Standard_A0";
+         hwProfile.numberOfCores = 1;
+         hwProfile.osDiskSizeInMB = 20480;
+         hwProfile.resourceDiskSizeInMB = 1047552;
+         hwProfile.memoryInMB = 768;
+         hwProfile.maxDataDiskCount = 1;
+         hwProfile.location = "westus";
+         hwProfiles.add(hwProfile);
 
       }
 
@@ -190,8 +200,8 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<VMDeplo
 
    private void getImagesFromPublisher(String publisherName, List<VMImage> osImagesRef, String location) {
 
-      OSImageApi osImageApi = api.getOSImageApi(location);
 
+      OSImageApi osImageApi = api.getOSImageApi(location);
       Iterable<Offer> offerList = osImageApi.listOffers(publisherName);
 
       for (Offer offer : offerList) {
@@ -206,6 +216,7 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<VMDeplo
             osImagesRef.add(vmImage);
          }
       }
+
    }
 
    private List<VMImage> listImagesByLocation(String location) {
@@ -266,7 +277,11 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<VMDeplo
 
    @Override
    public Iterable<Location> listLocations() {
-      List<Location> locations = api.getLocationApi().list();
+
+      List<Location> locations = new ArrayList<Location>();
+      Location loc = Location.create("westus", "westus", "westus", 20, 20);
+      locations.add(loc);
+            /*api.getLocationApi().list();
 
       List<ResourceProviderMetaData> resources = api.getResourceProviderApi().get("Microsoft.Compute");
 
@@ -285,8 +300,8 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<VMDeplo
             return vmLocations.contains(input.displayName());
          }
       });
-
-      return  result;
+*/
+      return locations;
    }
 
    private String getResourceGroupFromId(String id) {
