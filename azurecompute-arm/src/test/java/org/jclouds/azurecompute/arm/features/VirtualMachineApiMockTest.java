@@ -16,11 +16,14 @@
  */
 package org.jclouds.azurecompute.arm.features;
 
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
+import com.google.gson.internal.LinkedTreeMap;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import org.jclouds.azurecompute.arm.domain.HardwareProfile;
 import org.jclouds.azurecompute.arm.domain.IdReference;
 import org.jclouds.azurecompute.arm.domain.ImageReference;
+import org.jclouds.azurecompute.arm.domain.ResourceDefinition;
 import org.jclouds.azurecompute.arm.domain.VirtualMachine;
 import org.jclouds.azurecompute.arm.domain.VHD;
 import org.jclouds.azurecompute.arm.domain.OSDisk;
@@ -32,6 +35,8 @@ import org.jclouds.azurecompute.arm.domain.DataDisk;
 import org.jclouds.azurecompute.arm.domain.VirtualMachineInstance;
 import org.jclouds.azurecompute.arm.domain.VirtualMachineProperties;
 import org.jclouds.azurecompute.arm.internal.BaseAzureComputeApiMockTest;
+import org.jclouds.util.Predicates2;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.net.URI;
@@ -180,6 +185,22 @@ public class VirtualMachineApiMockTest extends BaseAzureComputeApiMockTest {
 
       assertSent(server, "POST", "/subscriptions/SUBSCRIPTIONID/resourceGroups/groupname/providers/Microsoft.Compute" +
               "/virtualMachines/windowsmachine/powerOff?api-version=2015-06-15");
+   }
+
+   public void testGeneralize() throws Exception {
+      server.enqueue(new MockResponse().setResponseCode(200));
+      final VirtualMachineApi vmAPI = api.getVirtualMachineApi("groupname");
+      vmAPI.generalize("vm"); // IllegalStateException if failed
+      assertSent(server, "POST", "/subscriptions/SUBSCRIPTIONID/resourceGroups/groupname/providers/Microsoft.Compute" +
+            "/virtualMachines/vm/generalize?api-version=2015-06-15");
+   }
+
+   public void testCapture() throws Exception {
+      server.enqueue(new MockResponse().setResponseCode(200));
+      final VirtualMachineApi vmAPI = api.getVirtualMachineApi("groupname");
+      URI uri = vmAPI.capture("vm", "prefix", "container");
+      assertSent(server, "POST", "/subscriptions/SUBSCRIPTIONID/resourceGroups/groupname/providers/Microsoft.Compute" +
+            "/virtualMachines/vm/capture?api-version=2015-06-15");
    }
 
    private VirtualMachineProperties getProperties() {
