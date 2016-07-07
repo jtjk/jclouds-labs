@@ -18,7 +18,6 @@ package org.jclouds.azurecompute.arm.compute;
 
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.jclouds.azurecompute.arm.compute.extensions.AzureComputeImageExtension.CUSTOM_IMAGE_PREFIX;
 import static org.jclouds.util.Predicates2.retry;
 import java.util.ArrayList;
 
@@ -33,9 +32,11 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import com.google.common.base.Supplier;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.net.UrlEscapers;
+import org.jclouds.View;
 import org.jclouds.azurecompute.arm.AzureComputeApi;
 import org.jclouds.azurecompute.arm.compute.config.AzureComputeServiceContextModule.AzureComputeConstants;
 import org.jclouds.azurecompute.arm.compute.functions.VMImageToImage;
@@ -43,6 +44,7 @@ import org.jclouds.azurecompute.arm.domain.Deployment;
 import org.jclouds.azurecompute.arm.domain.DeploymentBody;
 import org.jclouds.azurecompute.arm.domain.DeploymentProperties;
 import org.jclouds.azurecompute.arm.domain.ResourceProviderMetaData;
+import org.jclouds.azurecompute.arm.domain.StorageService;
 import org.jclouds.azurecompute.arm.domain.VMImage;
 import org.jclouds.azurecompute.arm.domain.VMHardware;
 import org.jclouds.azurecompute.arm.domain.Location;
@@ -54,6 +56,7 @@ import org.jclouds.azurecompute.arm.domain.VirtualMachine;
 import org.jclouds.azurecompute.arm.features.DeploymentApi;
 import org.jclouds.azurecompute.arm.features.OSImageApi;
 import org.jclouds.azurecompute.arm.features.VirtualMachineApi;
+import org.jclouds.azurecompute.arm.util.BlobHelper;
 import org.jclouds.azurecompute.arm.util.DeploymentTemplateBuilder;
 import org.jclouds.compute.ComputeServiceAdapter;
 import org.jclouds.compute.domain.Template;
@@ -89,13 +92,14 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<VMDeplo
 
    private final AzureComputeConstants azureComputeConstants;
 
+   private Supplier<View> blobstore = null;
+
    @Inject
    AzureComputeServiceAdapter(final AzureComputeApi api, final AzureComputeConstants azureComputeConstants,
                               CleanupResources cleanupResources) {
 
       this.api = api;
       this.azureComputeConstants = azureComputeConstants;
-
       this.azureGroup = azureComputeConstants.azureResourceGroup();
 
       logger.debug("AzureComputeServiceAdapter set azuregroup to: " + azureGroup);
@@ -218,7 +222,7 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<VMDeplo
          for (SKU sku : skuList) {
             Iterable<Version> versionList = osImageApi.listVersions(publisherName, offer.name(), sku.name());
             for (Version version : versionList) {
-               VMImage vmImage = VMImage.create(publisherName, offer.name(), sku.name(), version.name(), location, false);
+               VMImage vmImage = VMImage.create(publisherName, offer.name(), sku.name(), version.name(), location);
                osImagesRef.add(vmImage);
             }
          }
@@ -246,6 +250,19 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<VMDeplo
          osImages.addAll(listImagesByLocation(location.name()));
       }
       checkAndSetImageAvailability(osImages, Sets.newHashSet(locationIds));
+
+      // list custom images
+      String offer = "";
+      List<StorageService> storages = api.getStorageAccountApi(azureGroup).list();
+      for (StorageService storage : storages) {
+         String name = storage.name();
+         String key = api.getStorageAccountApi(azureGroup).getKeys(name).key1();
+            offer = "custom";
+            List<VMImage> images = BlobHelper.getImages("jclouds", azureGroup, storage.name(), key,
+                  offer, storage.location());
+            osImages.addAll(images);
+      }
+
       return osImages;
    }
 
@@ -264,12 +281,18 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<VMDeplo
    @Override
    public VMImage getImage(final String id) {
       String[] fields = VMImageToImage.decodeFieldsFromUniqueId(id);
-      if (fields[2].startsWith(CUSTOM_IMAGE_PREFIX)) {
-         String name = fields[2].substring(CUSTOM_IMAGE_PREFIX.length());
-         String sku = fields[3];
-         String version = "1";
-         VMImage ref = VMImage.create(CUSTOM_IMAGE_PREFIX + azureGroup, CUSTOM_IMAGE_PREFIX + name, sku, version, fields[0], false);
-         return ref;
+      boolean custom = fields.length == 6 ? true : false;
+      if (custom) {
+         String storage = fields[2];
+         String vhd = fields[3];
+
+         VMImage ref = VMImage.create(azureGroup, storage, vhd, null, "", fields[4], fields[5]);
+         String key = api.getStorageAccountApi(azureGroup).getKeys(storage).key1();
+         if (BlobHelper.customImageExists(storage, key))
+            return ref;
+         else
+            return null;
+
       }
 
       Iterable<VMImage> images = listImages();
@@ -407,8 +430,19 @@ public class AzureComputeServiceAdapter implements ComputeServiceAdapter<VMDeplo
             List<String> tags = Arrays.asList(tagString.split(","));
             vmDeployment.tags = tags;
          }
-         vmDeployments.add(vmDeployment);
+
+         // Check that this vm is not generalized and made to custom image
+         try {
+            String storageAccountName = vm.name().replaceAll("[^A-Za-z0-9 ]", "") + "stor";
+            String key = api.getStorageAccountApi(azureGroup).getKeys(storageAccountName).key1();
+            if (!BlobHelper.customImageExists(storageAccountName, key))
+               vmDeployments.add(vmDeployment);
+         }
+         catch (Exception e) {
+            // This might happen if there is no custom images but vm is generalized. No need to list
+         }
       }
+
       return vmDeployments;
    }
 

@@ -17,7 +17,6 @@
 package org.jclouds.azurecompute.arm.compute.functions;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.jclouds.azurecompute.arm.compute.extensions.AzureComputeImageExtension.CUSTOM_IMAGE_PREFIX;
 import static org.jclouds.azurecompute.arm.compute.functions.DeploymentToNodeMetadata.AZURE_LOGIN_PASSWORD;
 import static org.jclouds.azurecompute.arm.compute.functions.DeploymentToNodeMetadata.AZURE_LOGIN_USERNAME;
 
@@ -67,6 +66,10 @@ public class VMImageToImage implements Function<VMImage, Image> {
       return (imageReference.globallyAvailable() ? "global" : imageReference.location()) + "/" + imageReference.publisher() + "/" + imageReference.offer() + "/" + imageReference.sku();
    }
 
+   public static String encodeFieldsToUniqueIdCustom(VMImage imageReference){
+      return (imageReference.globallyAvailable() ? "global" : imageReference.location()) + "/" + imageReference.group() + "/" + imageReference.storage() + "/" + imageReference.vhd1() + "/" + imageReference.offer() + "/" + imageReference.location();
+   }
+
    public static String[] decodeFieldsFromUniqueId(final String id) {
       return checkNotNull(id, "id").split("/");
    }
@@ -80,26 +83,41 @@ public class VMImageToImage implements Function<VMImage, Image> {
    public Image apply(final VMImage image) {
 
       Credentials credentials = new Credentials(AZURE_LOGIN_USERNAME, AZURE_LOGIN_PASSWORD);
-      String name = "";
-      if (image.offer().startsWith(CUSTOM_IMAGE_PREFIX)) {
-         name = image.offer().substring(CUSTOM_IMAGE_PREFIX.length());
-      } else {
-            name = image.offer();
-      }
-      final ImageBuilder builder = new ImageBuilder()
-              .name(name)
-              .description(image.sku())
-              .status(Image.Status.AVAILABLE)
-              .version(image.sku())
-              .id(encodeFieldsToUniqueId(image))
-              .defaultCredentials(LoginCredentials.fromCredentials(credentials))
-              .providerId(image.publisher())
-              .location(image.globallyAvailable() ? null : FluentIterable.from(locations.get())
-                      .firstMatch(LocationPredicates.idEquals(image.location()))
-                      .get());
+      if (image.custom()) {
 
-      final OperatingSystem.Builder osBuilder = osFamily().apply(image);
-      return builder.operatingSystem(osBuilder.build()).build();
+         final ImageBuilder builder = new ImageBuilder()
+               .location(FluentIterable.from(locations.get())
+                     .firstMatch(LocationPredicates.idEquals(image.location()))
+                     .get())
+               .name(image.name())
+               .description("#" + image.group())
+               .status(Image.Status.AVAILABLE)
+               .version(image.storage())
+               .providerId(image.vhd1())
+               .id(encodeFieldsToUniqueIdCustom(image))
+               .defaultCredentials(LoginCredentials.fromCredentials(credentials));
+
+         final OperatingSystem.Builder osBuilder = osFamily().apply(image);
+         Image retimage = builder.operatingSystem(osBuilder.build()).build();
+         return retimage;
+
+      }
+      else {
+         final ImageBuilder builder = new ImageBuilder()
+               .name(image.offer())
+               .description(image.sku())
+               .status(Image.Status.AVAILABLE)
+               .version(image.sku())
+               .id(encodeFieldsToUniqueId(image))
+               .defaultCredentials(LoginCredentials.fromCredentials(credentials))
+               .providerId(image.publisher())
+               .location(image.globallyAvailable() ? null : FluentIterable.from(locations.get())
+                     .firstMatch(LocationPredicates.idEquals(image.location()))
+                     .get());
+
+         final OperatingSystem.Builder osBuilder = osFamily().apply(image);
+         return builder.operatingSystem(osBuilder.build()).build();
+      }
    }
 
    public static Function<VMImage, OperatingSystem.Builder> osFamily() {
@@ -124,12 +142,16 @@ public class VMImageToImage implements Function<VMImage, Image> {
                family = OsFamily.OEL;
             }
 
+            String sku = image.sku();
+            if (image.custom())
+               sku = image.vhd1();
+
             // only 64bit OS images are supported by Azure ARM
             return OperatingSystem.builder().
-                    family(family).
-                    is64Bit(true).
-                    description(image.sku()).
-                    version(image.sku());
+                  family(family).
+                  is64Bit(true).
+                  description(sku).
+                  version(sku);
          }
       };
    }
